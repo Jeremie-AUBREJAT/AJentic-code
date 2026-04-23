@@ -12,31 +12,43 @@ WORKSPACE = "workspace"
 
 
 # ---------------------------
-# Analyse fichier (OPTIMISÉ)
+# ANALYSE D'UN FICHIER (1 SEUL CALL LLM)
 # ---------------------------
 def analyze_file(file_path):
+
+    print(f"[ANALYZE] {file_path}")
 
     with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
         code = f.read()
 
+    # chunking uniquement pour sécurité mémoire
     chunks = chunk_text(code)
 
-    merged_result = {
-        "classes": [],
-        "functions": [],
-        "hooks": [],
-        "ajax": [],
-        "logic": []
-    }
+    # IMPORTANT : fusion AVANT LLM
+    full_code = "\n\n/* ===== FILE CHUNK ===== */\n\n".join(chunks)
 
-    for chunk in chunks:
+    prompt = f"""
+Tu es un expert en analyse de code WordPress (PHP + JavaScript).
 
-        prompt = f"""
-Analyse ce code WordPress.
+Analyse ce fichier COMPLET.
 
-Retourne UNIQUEMENT JSON:
+Tu dois détecter :
+- classes
+- fonctions
+- hooks WordPress
+- endpoints AJAX
+- logique métier
+
+⚠️ IMPORTANT :
+- retourne UNIQUEMENT un JSON valide
+- aucun texte
+- aucun markdown
+- fusion complète du fichier (pas chunk)
+
+FORMAT OBLIGATOIRE :
 
 {{
+  "language": "php|js|unknown",
   "classes": [],
   "functions": [],
   "hooks": [],
@@ -45,24 +57,28 @@ Retourne UNIQUEMENT JSON:
 }}
 
 CODE:
-{chunk}
+{full_code}
 """
 
-        result = ask_llm(prompt)
+    result = ask_llm(prompt)
 
-        if isinstance(result, dict):
+    # sécurité fallback
+    if not isinstance(result, dict):
+        return {
+            "language": "unknown",
+            "classes": [],
+            "functions": [],
+            "hooks": [],
+            "ajax": [],
+            "logic": [],
+            "raw_response": result
+        }
 
-            merged_result["classes"] += result.get("classes", [])
-            merged_result["functions"] += result.get("functions", [])
-            merged_result["hooks"] += result.get("hooks", [])
-            merged_result["ajax"] += result.get("ajax", [])
-            merged_result["logic"] += result.get("logic", [])
-
-    return merged_result
+    return result
 
 
 # ---------------------------
-# FUSION GLOBALE PLUGIN
+# FUSION GLOBALE DU PLUGIN
 # ---------------------------
 def merge_global(results):
 
@@ -75,20 +91,16 @@ def merge_global(results):
     }
 
     for file in results:
-
         data = file["analysis"]
 
-        merged["classes"] += data.get("classes", [])
-        merged["functions"] += data.get("functions", [])
-        merged["hooks"] += data.get("hooks", [])
-        merged["ajax"] += data.get("ajax", [])
-        merged["logic"] += data.get("logic", [])
+        for key in merged.keys():
+            merged[key] += data.get(key, [])
 
     return merged
 
 
 # ---------------------------
-# SAVE
+# SAVE JSON
 # ---------------------------
 def save_output(data):
 
@@ -103,25 +115,21 @@ def save_output(data):
 # ---------------------------
 def run_analysis(input_path):
 
-    print("Detecting input type...")
+    print("[1] Detect input...")
     input_type = detect_input(input_path)
 
-    print("Type:", input_type)
-
-    print("Extracting project...")
+    print("[2] Extract project...")
     project_dir = extract_input(input_path, WORKSPACE)
 
-    print("Scanning codebase...")
+    print("[3] Scan codebase...")
     files = scan_codebase(project_dir)
 
-    print(f"Files found: {len(files)}")
+    print(f"[INFO] Files found: {len(files)}")
 
     results = []
 
-    # LIMIT pour perf
+    # LIMIT pour tests
     for file in files[:10]:
-
-        print("Analyzing:", file)
 
         analysis = analyze_file(file)
 
@@ -130,7 +138,7 @@ def run_analysis(input_path):
             "analysis": analysis
         })
 
-    # 🔥 FUSION GLOBALE
+    # fusion globale
     global_analysis = merge_global(results)
 
     final_result = {
@@ -140,12 +148,12 @@ def run_analysis(input_path):
         "global_analysis": global_analysis
     }
 
-    # SAVE JSON
+    # save JSON
     save_output(final_result)
 
-    # HTML DOC (Doxygen-like)
+    # generate HTML doc
     html_path = generate_html_doc(final_result)
 
-    print("DOC GENERATED:", html_path)
+    print("[DONE] HTML DOC:", html_path)
 
     return final_result
