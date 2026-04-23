@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Agent Dev</title>
+
+<style>
+
+body{
+font-family: Arial;
+background:#111;
+color:white;
+text-align:center;
+padding-top:100px;
+}
+
+.upload-box{
+border:2px dashed #555;
+padding:40px;
+width:400px;
+margin:auto;
+}
+
+button{
+margin-top:20px;
+padding:10px 20px;
+font-size:16px;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<h1>Agent Dev - Analyse Projet</h1>
+
+<div class="upload-box">
+
+<form id="uploadForm">
+
+<input type="file" name="file" required>
+
+<br>
+
+<button type="submit">Analyser</button>
+
+</form>
+
+</div>
+
+<pre id="result"></pre>
+
+<script>
+
+document.getElementById("uploadForm").onsubmit = async function(e){
+
+e.preventDefault()
+
+let formData = new FormData(this)
+
+let response = await fetch("/upload",{
+method:"POST",
+body:formData
+})
+
+let data = await response.json()
+
+document.getElementById("result").textContent =
+JSON.stringify(data,null,2)
+
+}
+
+</script>
+
+</body>
+</html>

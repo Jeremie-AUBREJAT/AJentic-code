@@ -2,3 +2,6 @@ requests
 beautifulsoup4
 rarfile
 python-magic
+fastapi
+uvicorn
+python-multipart
