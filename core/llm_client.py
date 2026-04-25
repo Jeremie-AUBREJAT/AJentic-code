@@ -35,10 +35,10 @@ def ask_llm(prompt):
         ],
         "mode": "instruct",
         "temperature": 0.2,
-        "max_tokens": 4096
+        "max_tokens": 8192
     }
 
-    r = requests.post(OOBABOOGA_API, json=payload, timeout=120)
+    r = requests.post(OOBABOOGA_API, json=payload, timeout=1200)
 
     try:
         data = r.json()
