@@ -11,31 +11,30 @@
           "button-primary"
         ],
         "functions": [
-          "jQuery(document).ready(...)",
-          "$.post(...)"
+          "jQuery(document).ready"
         ],
         "hooks": [
-          "oc_ajax.ajax_url (Implied WordPress AJAX hook)",
-          "action:'oc_check_email' (The specific action hook)"
+          "$(document).on('click', '#oc_submit', function(e) { ... })"
         ],
         "ajax": [
           {
+            "url": "oc_ajax.ajax_url",
             "action": "oc_check_email",
-            "parameters": [
-              "email"
-            ],
-            "success_action": "Set cookie and location.reload()",
-            "failure_action": "Update container with response data"
+            "data_key": "email"
           }
         ],
         "logic": [
-          "Initialization: Checks for the existence of the email container.",
-          "Initial Display: Renders a custom email verification form when the container is present.",
-          "Event Handling: Listens for the click event on the submit button (#oc_submit).",
-          "Submission Flow: Prevents default form submission.",
-          "AJAX Request: Sends the user's email to the WordPress backend via $.post.",
-          "Success Path: If the response is successful, sets a cookie ('oc_email_valid=1') and reloads the page to display the calendar.",
-          "Failure Path: If the response fails, updates the container element with the message returned by the PHP endpoint."
+          "Initialisation : Vérifie si l'élément avec l'ID 'oc-email-container' existe. Si oui, il injecte le HTML du formulaire d'email.",
+          "Gestion du clic sur le bouton 'oc_submit' :",
+          "  - Empêche le comportement par défaut du formulaire (submit).",
+          "  - Récupère la valeur de l'email dans le champ '#oc_email'.",
+          "  - Met à jour le message d'état à 'Vérification en cours...'.",
+          "  - Effectue une requête AJAX POST vers `oc_ajax.ajax_url` avec l'action 'oc_check_email' et l'email.",
+          "  - Si la réponse AJAX est un succès (`res.success` est vrai) :",
+          "    - Définit un cookie `oc_email_valid=1` pour le chemin racine (`/`).",
+          "    - Recharge la page (`location.reload()`) pour afficher le calendrier.",
+          "  - Si la réponse AJAX est un échec (`res.success` est faux) :",
+          "    - Remplace le contenu du conteneur (`container.html()`) par le message/contenu reçu dans `res.data.message` (probablement le formulaire WPForms)."
         ]
       }
     },
@@ -43,14 +42,16 @@
       "file": "workspace\\project\\overload_calendar\\overload_calendar.php",
       "analysis": {
         "language": "php",
-        "classes": [],
+        "classes": [
+          "Wappointment\\Models\\Appointment"
+        ],
         "functions": [
           "oc_is_admin_connected",
           "oc_create_patients_table",
           "oc_patients_page",
           "oc_check_email",
-          "oc_get_patients_for_wappo_clients_to_patients",
-          "oc_sync_wappo_clients_to_patients"
+          "oc_sync_wappo_clients_to_patients",
+          "oc_get_patients_for_wappointment"
         ],
         "hooks": [
           "register_activation_hook",
@@ -59,21 +60,29 @@
           "wp_ajax_nopriv_oc_check_email",
           "wp_ajax_oc_check_email",
           "do_shortcode_tag",
-          "admin_init",
-          "wappointment_process_book",
-          "wappointment_status_ticket"
+          "admin_init"
         ],
         "ajax": [
           "oc_check_email"
         ],
         "logic": [
-          "Création de la table patients (oc_patients)",
-          "Gestion des patients via l'interface admin (ajout/suppression)",
-          "Vérification d'email via AJAX",
-          "Interception et restriction du shortcode Wappointment",
-          "Synchronisation des emails entre la table clients Wappointment et la table patients OC",
-          "Envoi des données des clients Wappointment au frontend",
-          "Logique métier pour forcer le statut des rendez-vous Wappointment à 'confirmé' pour les administrateurs"
+          "Vérifie si l'utilisateur est connecté et a la capacité 'manage_options' (oc_is_admin_connected).",
+          "Crée la table 'oc_patients' lors de l'activation du plugin (oc_create_patients_table).",
+          "Gère l'affichage du menu admin 'Patient Email' et la page associée (oc_patients_page).",
+          "Permet l'ajout d'un email via POST dans la page admin (oc_patients_page).",
+          "Permet la suppression d'un email via GET dans la page admin (oc_patients_page).",
+          "Récupère et affiche la liste des emails patients depuis la DB (oc_patients_page).",
+          "Enfile le script JS 'oc-ajax' sur le frontend si l'utilisateur n'est pas admin (wp_enqueue_scripts).",
+          "Localise l'URL AJAX pour le script 'oc-ajax' (wp_enqueue_scripts).",
+          "Vérifie si un email est présent dans la table 'oc_patients' via AJAX (oc_check_email).",
+          "Intercepte le shortcode 'wap_widget' pour masquer le contenu si l'utilisateur n'est pas admin ET n'a pas de cookie 'oc_email_valid' (do_shortcode_tag).",
+          "Ajoute un menu admin secondaire 'Ajout rendez-vous' (admin_menu).",
+          "Redirige vers la page de rendez-vous si l'URL contient le paramètre 'page=oc-add-rdv' (admin_init).",
+          "Enfile le script JS 'oc-wappo-front' sur le frontend si l'utilisateur est admin (wp_enqueue_scripts).",
+          "Récupère la liste des clients de Wappointment ('wappo_clients') et la passe au JS admin (oc_get_patients_for_wappointment).",
+          "Synchronise les emails de 'wappo_clients' vers 'oc_patients' à chaque chargement admin (oc_sync_wappo_clients_to_patients).",
+          "Force le statut de réservation à 'confirmé' pour les réservations faites par un admin via le filtre 'wappointment_process_book'.",
+          "Force le statut de ticket à 'confirmé' pour les réservations faites par un admin via le filtre 'wappointment_status_ticket'."
         ]
       }
     },
@@ -81,26 +90,36 @@
       "file": "workspace\\project\\overload_calendar\\assets\\front.js",
       "analysis": {
         "language": "js",
-        "classes": [],
+        "classes": [
+          "MutationObserver"
+        ],
         "functions": [
           "initAutocompleteOnEmail",
           "triggerWappoEvents"
         ],
         "hooks": [
           "DOMContentLoaded",
-          "MutationObserver"
+          "input"
         ],
         "ajax": [],
         "logic": [
           "Initialisation du script au chargement du DOM.",
-          "Vérification de l'existence et des droits d'accès de l'objet OC_PATIENTS (vérification du statut admin).",
-          "Récupération de la liste des patients.",
-          "Mise en place d'un MutationObserver pour détecter l'injection du formulaire de réservation (Wappointment).",
-          "Initialisation de l'autocomplete lorsque le formulaire est détecté.",
-          "Filtrage des patients en fonction de la saisie de l'utilisateur (email ou nom).",
-          "Affichage des suggestions d'autocomplétion.",
-          "Mise à jour des champs du formulaire (email, nom, téléphone) lors du clic sur une suggestion.",
-          "Déclenchement des événements 'input', 'change', et 'blur' sur les champs du formulaire pour synchroniser l'état avec le système Wappo."
+          "Vérification de la présence et du statut admin de l'objet global OC_PATIENTS.",
+          "Récupération de la liste des patients depuis OC_PATIENTS.list.",
+          "Observation du document body pour détecter l'injection du formulaire (via MutationObserver).",
+          "Détection du formulaire cible : .wrap-calendar.p-2.step-BookingFormInputs.",
+          "Recherche de l'input email dans le formulaire (priorité à #email, puis input[type='email']).",
+          "Arrêt de l'observation (observer.disconnect()) une fois le formulaire trouvé.",
+          "Initialisation de l'autocomplétion sur l'input email en passant l'input et la liste des patients.",
+          "Dans initAutocompleteOnEmail : Création et stylisation d'une boîte de suggestion (suggestionBox).",
+          "Ajustement du parent de l'input pour assurer un positionnement relatif.",
+          "Gestion de l'événement 'input' sur l'input email :",
+          "Filtrage des patients basés sur la valeur de l'input (si la longueur est >= 2).",
+          "Affichage des correspondances trouvées dans la suggestionBox.",
+          "Gestion du clic sur une suggestion :",
+          "Remplissage de l'input email, du nom (#name) et du téléphone (.tel) avec les données du patient sélectionné.",
+          "Déclenchement des événements 'input', 'change', et 'blur' sur les champs remplis pour mettre à jour l'état de Wappo.",
+          "Gestion du clic sur le document : Masquer la suggestionBox si le clic n'est pas sur l'input ou la boîte de suggestion."
         ]
       }
     }
@@ -108,23 +127,23 @@
   "global_analysis": {
     "classes": [
       "button",
-      "button-primary"
+      "button-primary",
+      "Wappointment\\Models\\Appointment",
+      "MutationObserver"
     ],
     "functions": [
-      "jQuery(document).ready(...)",
-      "$.post(...)",
+      "jQuery(document).ready",
       "oc_is_admin_connected",
       "oc_create_patients_table",
       "oc_patients_page",
       "oc_check_email",
-      "oc_get_patients_for_wappo_clients_to_patients",
       "oc_sync_wappo_clients_to_patients",
+      "oc_get_patients_for_wappointment",
       "initAutocompleteOnEmail",
       "triggerWappoEvents"
     ],
     "hooks": [
-      "oc_ajax.ajax_url (Implied WordPress AJAX hook)",
-      "action:'oc_check_email' (The specific action hook)",
+      "$(document).on('click', '#oc_submit', function(e) { ... })",
       "register_activation_hook",
       "admin_menu",
       "wp_enqueue_scripts",
@@ -132,46 +151,63 @@
       "wp_ajax_oc_check_email",
       "do_shortcode_tag",
       "admin_init",
-      "wappointment_process_book",
-      "wappointment_status_ticket",
       "DOMContentLoaded",
-      "MutationObserver"
+      "input"
     ],
     "ajax": [
       {
+        "url": "oc_ajax.ajax_url",
         "action": "oc_check_email",
-        "parameters": [
-          "email"
-        ],
-        "success_action": "Set cookie and location.reload()",
-        "failure_action": "Update container with response data"
+        "data_key": "email"
       },
       "oc_check_email"
     ],
     "logic": [
-      "Initialization: Checks for the existence of the email container.",
-      "Initial Display: Renders a custom email verification form when the container is present.",
-      "Event Handling: Listens for the click event on the submit button (#oc_submit).",
-      "Submission Flow: Prevents default form submission.",
-      "AJAX Request: Sends the user's email to the WordPress backend via $.post.",
-      "Success Path: If the response is successful, sets a cookie ('oc_email_valid=1') and reloads the page to display the calendar.",
-      "Failure Path: If the response fails, updates the container element with the message returned by the PHP endpoint.",
-      "Création de la table patients (oc_patients)",
-      "Gestion des patients via l'interface admin (ajout/suppression)",
-      "Vérification d'email via AJAX",
-      "Interception et restriction du shortcode Wappointment",
-      "Synchronisation des emails entre la table clients Wappointment et la table patients OC",
-      "Envoi des données des clients Wappointment au frontend",
-      "Logique métier pour forcer le statut des rendez-vous Wappointment à 'confirmé' pour les administrateurs",
+      "Initialisation : Vérifie si l'élément avec l'ID 'oc-email-container' existe. Si oui, il injecte le HTML du formulaire d'email.",
+      "Gestion du clic sur le bouton 'oc_submit' :",
+      "  - Empêche le comportement par défaut du formulaire (submit).",
+      "  - Récupère la valeur de l'email dans le champ '#oc_email'.",
+      "  - Met à jour le message d'état à 'Vérification en cours...'.",
+      "  - Effectue une requête AJAX POST vers `oc_ajax.ajax_url` avec l'action 'oc_check_email' et l'email.",
+      "  - Si la réponse AJAX est un succès (`res.success` est vrai) :",
+      "    - Définit un cookie `oc_email_valid=1` pour le chemin racine (`/`).",
+      "    - Recharge la page (`location.reload()`) pour afficher le calendrier.",
+      "  - Si la réponse AJAX est un échec (`res.success` est faux) :",
+      "    - Remplace le contenu du conteneur (`container.html()`) par le message/contenu reçu dans `res.data.message` (probablement le formulaire WPForms).",
+      "Vérifie si l'utilisateur est connecté et a la capacité 'manage_options' (oc_is_admin_connected).",
+      "Crée la table 'oc_patients' lors de l'activation du plugin (oc_create_patients_table).",
+      "Gère l'affichage du menu admin 'Patient Email' et la page associée (oc_patients_page).",
+      "Permet l'ajout d'un email via POST dans la page admin (oc_patients_page).",
+      "Permet la suppression d'un email via GET dans la page admin (oc_patients_page).",
+      "Récupère et affiche la liste des emails patients depuis la DB (oc_patients_page).",
+      "Enfile le script JS 'oc-ajax' sur le frontend si l'utilisateur n'est pas admin (wp_enqueue_scripts).",
+      "Localise l'URL AJAX pour le script 'oc-ajax' (wp_enqueue_scripts).",
+      "Vérifie si un email est présent dans la table 'oc_patients' via AJAX (oc_check_email).",
+      "Intercepte le shortcode 'wap_widget' pour masquer le contenu si l'utilisateur n'est pas admin ET n'a pas de cookie 'oc_email_valid' (do_shortcode_tag).",
+      "Ajoute un menu admin secondaire 'Ajout rendez-vous' (admin_menu).",
+      "Redirige vers la page de rendez-vous si l'URL contient le paramètre 'page=oc-add-rdv' (admin_init).",
+      "Enfile le script JS 'oc-wappo-front' sur le frontend si l'utilisateur est admin (wp_enqueue_scripts).",
+      "Récupère la liste des clients de Wappointment ('wappo_clients') et la passe au JS admin (oc_get_patients_for_wappointment).",
+      "Synchronise les emails de 'wappo_clients' vers 'oc_patients' à chaque chargement admin (oc_sync_wappo_clients_to_patients).",
+      "Force le statut de réservation à 'confirmé' pour les réservations faites par un admin via le filtre 'wappointment_process_book'.",
+      "Force le statut de ticket à 'confirmé' pour les réservations faites par un admin via le filtre 'wappointment_status_ticket'.",
       "Initialisation du script au chargement du DOM.",
-      "Vérification de l'existence et des droits d'accès de l'objet OC_PATIENTS (vérification du statut admin).",
-      "Récupération de la liste des patients.",
-      "Mise en place d'un MutationObserver pour détecter l'injection du formulaire de réservation (Wappointment).",
-      "Initialisation de l'autocomplete lorsque le formulaire est détecté.",
-      "Filtrage des patients en fonction de la saisie de l'utilisateur (email ou nom).",
-      "Affichage des suggestions d'autocomplétion.",
-      "Mise à jour des champs du formulaire (email, nom, téléphone) lors du clic sur une suggestion.",
-      "Déclenchement des événements 'input', 'change', et 'blur' sur les champs du formulaire pour synchroniser l'état avec le système Wappo."
+      "Vérification de la présence et du statut admin de l'objet global OC_PATIENTS.",
+      "Récupération de la liste des patients depuis OC_PATIENTS.list.",
+      "Observation du document body pour détecter l'injection du formulaire (via MutationObserver).",
+      "Détection du formulaire cible : .wrap-calendar.p-2.step-BookingFormInputs.",
+      "Recherche de l'input email dans le formulaire (priorité à #email, puis input[type='email']).",
+      "Arrêt de l'observation (observer.disconnect()) une fois le formulaire trouvé.",
+      "Initialisation de l'autocomplétion sur l'input email en passant l'input et la liste des patients.",
+      "Dans initAutocompleteOnEmail : Création et stylisation d'une boîte de suggestion (suggestionBox).",
+      "Ajustement du parent de l'input pour assurer un positionnement relatif.",
+      "Gestion de l'événement 'input' sur l'input email :",
+      "Filtrage des patients basés sur la valeur de l'input (si la longueur est >= 2).",
+      "Affichage des correspondances trouvées dans la suggestionBox.",
+      "Gestion du clic sur une suggestion :",
+      "Remplissage de l'input email, du nom (#name) et du téléphone (.tel) avec les données du patient sélectionné.",
+      "Déclenchement des événements 'input', 'change', et 'blur' sur les champs remplis pour mettre à jour l'état de Wappo.",
+      "Gestion du clic sur le document : Masquer la suggestionBox si le clic n'est pas sur l'input ou la boîte de suggestion."
     ]
   }
 }

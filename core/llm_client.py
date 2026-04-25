@@ -27,36 +27,31 @@ def ask_llm(prompt):
             {
                 "role": "system",
                 "content": (
-                    "Tu es un analyseur de code WordPress. "
-                    "Tu réponds UNIQUEMENT en JSON valide. "
-                    "Aucun texte."
+                    "Tu es un analyseur de code WordPress expert. "
+                    "Tu dois répondre UNIQUEMENT en JSON valide strict."
                 )
             },
-            {
-                "role": "user",
-                "content": prompt
-            }
+            {"role": "user", "content": prompt}
         ],
         "mode": "instruct",
         "temperature": 0.2,
-        "max_tokens": 2000
+        "max_tokens": 4096
     }
 
+    r = requests.post(OOBABOOGA_API, json=payload, timeout=120)
+
     try:
-
-        r = requests.post(OOBABOOGA_API, json=payload)
-
         data = r.json()
-
         raw = data["choices"][0]["message"]["content"]
+    except:
+        return {"error": "api_error"}
 
-        cleaned = clean_json(raw)
+    cleaned = clean_json(raw)
 
+    try:
         return json.loads(cleaned)
-
-    except Exception as e:
-
+    except:
         return {
-            "status": "error",
-            "message": str(e)
+            "error": "invalid_json",
+            "raw_response": raw
         }
