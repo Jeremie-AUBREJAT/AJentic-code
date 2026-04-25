@@ -1,0 +1,25 @@
+{
+  "language": "js",
+  "classes": [
+    "MutationObserver (implémenté via une instance de MutationObserver)"
+  ],
+  "functions": [
+    "initAutocompleteOnEmail",
+    "triggerWappoEvents"
+  ],
+  "hooks": [
+    "document.addEventListener('DOMContentLoaded', ...)",
+    "MutationObserver (observateur DOM)"
+  ],
+  "ajax": [
+    "Aucun endpoint AJAX explicite détecté, mais la logique dépend de données initiales (OC_PATIENTS)"
+  ],
+  "logic": [
+    "Initialisation du script au chargement du DOM.",
+    "Vérification de l'état d'administration (`OC_PATIENTS.isAdmin`) pour activer l'autocomplete.",
+    "Observation du DOM pour détecter l'injection du formulaire de réservation (`MutationObserver`).",
+    "Logique d'autocomplétion : filtrage des patients par email ou nom.",
+    "Gestion des événements de sélection : mise à jour des champs (email, nom, téléphone) et déclenchement des événements `input`/`change`/`blur` sur les champs du formulaire.",
+    "Gestion de l'interface utilisateur de l'autocomplete (création de la boîte de suggestion, gestion des clics externes)."
+  ]
+}

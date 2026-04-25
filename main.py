@@ -1,31 +1,33 @@
 import os
 import json
+from pathlib import Path
 
 from core.input_detector import detect_input
 from core.extractor import extract_input
 from core.scanner import scan_codebase
-from core.chunker import chunk_text
 from core.llm_client import ask_llm
 from core.doc_generator import generate_html_doc
 
 WORKSPACE = "workspace"
+OUTPUT_DIR = "output"
 
 
 # ---------------------------
-# ANALYSE D'UN FICHIER (1 SEUL CALL LLM)
+# ANALYSE D'UN FICHIER (1 CALL LLM)
 # ---------------------------
 def analyze_file(file_path):
 
     print(f"[ANALYZE] {file_path}")
 
-    with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
-        code = f.read()
-
-    # chunking uniquement pour sécurité mémoire
-    chunks = chunk_text(code)
-
-    # IMPORTANT : fusion AVANT LLM
-    full_code = "\n\n/* ===== FILE CHUNK ===== */\n\n".join(chunks)
+    try:
+        with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
+            code = f.read()
+    except Exception as e:
+        return {
+            "status": "error",
+            "file": str(file_path),
+            "message": str(e)
+        }
 
     prompt = f"""
 Tu es un expert en analyse de code WordPress (PHP + JavaScript).
@@ -33,6 +35,7 @@ Tu es un expert en analyse de code WordPress (PHP + JavaScript).
 Analyse ce fichier COMPLET.
 
 Tu dois détecter :
+
 - classes
 - fonctions
 - hooks WordPress
@@ -40,10 +43,10 @@ Tu dois détecter :
 - logique métier
 
 ⚠️ IMPORTANT :
+
 - retourne UNIQUEMENT un JSON valide
 - aucun texte
 - aucun markdown
-- fusion complète du fichier (pas chunk)
 
 FORMAT OBLIGATOIRE :
 
@@ -57,14 +60,13 @@ FORMAT OBLIGATOIRE :
 }}
 
 CODE:
-{full_code}
+{code}
 """
 
     result = ask_llm(prompt)
 
-    # sécurité fallback
     if not isinstance(result, dict):
-        return {
+        result = {
             "language": "unknown",
             "classes": [],
             "functions": [],
@@ -78,11 +80,33 @@ CODE:
 
 
 # ---------------------------
-# FUSION GLOBALE DU PLUGIN
+# SAVE JSON PAR FICHIER
 # ---------------------------
-def merge_global(results):
+def save_file_json(file_path, analysis, plugin_name):
+
+    plugin_output = Path(OUTPUT_DIR) / plugin_name
+    plugin_output.mkdir(parents=True, exist_ok=True)
+
+    file_name = Path(file_path).name + ".json"
+
+    output_path = plugin_output / file_name
+
+    with open(output_path, "w", encoding="utf-8") as f:
+        json.dump(analysis, f, indent=2, ensure_ascii=False)
+
+    return output_path
+
+
+# ---------------------------
+# MERGE GLOBAL
+# ---------------------------
+def merge_results(plugin_name):
+
+    plugin_output = Path(OUTPUT_DIR) / plugin_name
 
     merged = {
+        "plugin": plugin_name,
+        "files": [],
         "classes": [],
         "functions": [],
         "hooks": [],
@@ -90,24 +114,25 @@ def merge_global(results):
         "logic": []
     }
 
-    for file in results:
-        data = file["analysis"]
+    for json_file in plugin_output.glob("*.json"):
 
-        for key in merged.keys():
-            merged[key] += data.get(key, [])
+        with open(json_file, "r", encoding="utf-8") as f:
+            data = json.load(f)
 
-    return merged
+        merged["files"].append(json_file.name)
 
+        merged["classes"] += data.get("classes", [])
+        merged["functions"] += data.get("functions", [])
+        merged["hooks"] += data.get("hooks", [])
+        merged["ajax"] += data.get("ajax", [])
+        merged["logic"] += data.get("logic", [])
 
-# ---------------------------
-# SAVE JSON
-# ---------------------------
-def save_output(data):
+    final_path = Path(OUTPUT_DIR) / f"{plugin_name}_analysis.json"
 
-    os.makedirs("output", exist_ok=True)
+    with open(final_path, "w", encoding="utf-8") as f:
+        json.dump(merged, f, indent=2, ensure_ascii=False)
 
-    with open("output/result.json", "w", encoding="utf-8") as f:
-        json.dump(data, f, indent=2, ensure_ascii=False)
+    return final_path
 
 
 # ---------------------------
@@ -121,6 +146,8 @@ def run_analysis(input_path):
     print("[2] Extract project...")
     project_dir = extract_input(input_path, WORKSPACE)
 
+    plugin_name = Path(project_dir).name
+
     print("[3] Scan codebase...")
     files = scan_codebase(project_dir)
 
@@ -128,32 +155,28 @@ def run_analysis(input_path):
 
     results = []
 
-    # LIMIT pour tests
-    for file in files[:10]:
+    for file in files:
 
         analysis = analyze_file(file)
+
+        save_file_json(file, analysis, plugin_name)
 
         results.append({
             "file": str(file),
             "analysis": analysis
         })
 
-    # fusion globale
-    global_analysis = merge_global(results)
+    print("[4] Merge JSON files...")
 
-    final_result = {
-        "input_type": input_type,
-        "files_analyzed": len(results),
-        "results": results,
-        "global_analysis": global_analysis
-    }
+    merged_json = merge_results(plugin_name)
 
-    # save JSON
-    save_output(final_result)
+    print("[DONE] JSON GLOBAL:", merged_json)
 
-    # generate HTML doc
-    html_path = generate_html_doc(final_result)
+    html_path = generate_html_doc({
+        "plugin": plugin_name,
+        "results": results
+    })
 
     print("[DONE] HTML DOC:", html_path)
 
-    return final_result
+    return merged_json

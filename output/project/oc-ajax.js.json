@@ -1,0 +1,32 @@
+{
+  "language": "js",
+  "classes": [
+    "jQuery"
+  ],
+  "functions": [
+    "jQuery(document).ready()",
+    "Click handler for #oc_submit",
+    "AJAX success/failure callback"
+  ],
+  "hooks": [
+    "oc_check_email (AJAX endpoint hook)"
+  ],
+  "ajax": [
+    {
+      "action": "oc_check_email",
+      "url": "oc_ajax.ajax_url",
+      "parameters": {
+        "email": "..."
+      },
+      "success_action": "Set cookie and location.reload()",
+      "failure_action": "Update container with server response data"
+    }
+  ],
+  "logic": [
+    "Initializes the email verification form within the #oc-email-container.",
+    "On button click, prevents default action and captures the email input.",
+    "Sends an asynchronous AJAX request to the server to validate the email.",
+    "If validation is successful (res.success is true): sets a cookie ('oc_email_valid=1') and reloads the page to display the calendar.",
+    "If validation fails (res.success is false): replaces the container content with the error message returned by the server."
+  ]
+}

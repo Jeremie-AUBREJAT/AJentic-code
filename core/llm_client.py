@@ -6,9 +6,6 @@ OOBABOOGA_API = "http://127.0.0.1:5000/v1/chat/completions"
 
 
 def clean_json(text):
-    """
-    Extrait uniquement JSON valide depuis réponse LLM
-    """
 
     if not text:
         return None
@@ -32,27 +29,34 @@ def ask_llm(prompt):
                 "content": (
                     "Tu es un analyseur de code WordPress. "
                     "Tu réponds UNIQUEMENT en JSON valide. "
-                    "Aucun texte, aucun markdown."
+                    "Aucun texte."
                 )
             },
-            {"role": "user", "content": prompt}
+            {
+                "role": "user",
+                "content": prompt
+            }
         ],
         "mode": "instruct",
         "temperature": 0.2,
         "max_tokens": 2000
     }
 
-    r = requests.post(OOBABOOGA_API, json=payload)
-    data = r.json()
-
-    raw = data["choices"][0]["message"]["content"]
-
-    cleaned = clean_json(raw)
-
     try:
+
+        r = requests.post(OOBABOOGA_API, json=payload)
+
+        data = r.json()
+
+        raw = data["choices"][0]["message"]["content"]
+
+        cleaned = clean_json(raw)
+
         return json.loads(cleaned)
-    except:
+
+    except Exception as e:
+
         return {
-            "error": "invalid_json",
-            "raw_response": raw
+            "status": "error",
+            "message": str(e)
         }
