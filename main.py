@@ -11,7 +11,7 @@ WORKSPACE = "workspace"
 
 
 # ---------------------------
-# ANALYSE FICHIER (1 CALL LLM / FICHIER)
+# ANALYSE FICHIER (1 CALL LLM)
 # ---------------------------
 def analyze_file(file_path):
 
@@ -25,9 +25,7 @@ Tu es un expert en analyse de plugins WordPress (PHP + JavaScript).
 
 Analyse ce fichier COMPLET.
 
-Tu dois extraire uniquement des informations fiables.
-
-Retour JSON STRICT :
+Retourne STRICTEMENT un JSON valide avec cette structure :
 
 {{
   "language": "php|js|unknown",
@@ -38,10 +36,10 @@ Retour JSON STRICT :
   "logic": []
 }}
 
-RÈGLES IMPORTANTES:
-- aucun texte
+RÈGLES :
+- JSON strict uniquement
 - aucun markdown
-- JSON valide uniquement
+- aucune explication
 - pas d'invention
 - si inconnu => tableau vide
 
@@ -66,25 +64,105 @@ CODE:
 
 
 # ---------------------------
-# MERGE GLOBAL PLUGIN
+# BUILD GLOBAL ANALYSIS
 # ---------------------------
-def merge_global(results):
+def build_global_analysis(results):
 
-    merged = {
+    global_analysis = {
         "classes": [],
         "functions": [],
         "hooks": [],
         "ajax": [],
-        "logic": []
+        "logic": [],
+        "entrypoints": [],
+        "hook_map": [],
+        "execution_graph": [],
+        "data_flow": [],
+        "state_model": [],
+        "data_sinks": []
     }
 
     for file in results:
+
+        path = file["file"]
         data = file.get("analysis", {})
 
-        for k in merged.keys():
-            merged[k] += data.get(k, [])
+        classes = data.get("classes", [])
+        functions = data.get("functions", [])
+        hooks = data.get("hooks", [])
+        ajax = data.get("ajax", [])
+        logic = data.get("logic", [])
 
-    return merged
+        global_analysis["classes"] += classes
+        global_analysis["functions"] += functions
+        global_analysis["hooks"] += hooks
+        global_analysis["ajax"] += ajax
+        global_analysis["logic"] += logic
+
+        # ENTRYPOINTS
+        for h in hooks:
+            global_analysis["entrypoints"].append(h)
+
+        # HOOK MAP
+        for h in hooks:
+            for f in functions:
+                global_analysis["hook_map"].append({
+                    "hook": h,
+                    "function": f,
+                    "file": path
+                })
+
+        # EXECUTION GRAPH
+        for h in hooks:
+            for f in functions:
+                global_analysis["execution_graph"].append({
+                    "entrypoint": h,
+                    "function": f,
+                    "file": path
+                })
+
+        # DATA FLOW (AJAX)
+        for a in ajax:
+            global_analysis["data_flow"].append({
+                "type": "ajax",
+                "endpoint": a,
+                "file": path
+            })
+
+        # DATA SINKS
+        for l in logic:
+
+            lower = l.lower()
+
+            if "wpdb" in lower or "database" in lower or "table" in lower:
+                global_analysis["data_sinks"].append({
+                    "type": "database",
+                    "description": l,
+                    "file": path
+                })
+
+            if "cookie" in lower:
+                global_analysis["data_sinks"].append({
+                    "type": "cookie",
+                    "description": l,
+                    "file": path
+                })
+
+            if "ajax" in lower:
+                global_analysis["data_sinks"].append({
+                    "type": "ajax",
+                    "description": l,
+                    "file": path
+                })
+
+            if "post" in lower or "get" in lower:
+                global_analysis["state_model"].append({
+                    "type": "request_state",
+                    "description": l,
+                    "file": path
+                })
+
+    return global_analysis
 
 
 # ---------------------------
@@ -116,7 +194,7 @@ def run_analysis(input_path):
 
     results = []
 
-    for file in files[:10]:
+    for file in files:
 
         analysis = analyze_file(file)
 
@@ -125,7 +203,7 @@ def run_analysis(input_path):
             "analysis": analysis
         })
 
-    global_analysis = merge_global(results)
+    global_analysis = build_global_analysis(results)
 
     final = {
         "input_type": input_type,

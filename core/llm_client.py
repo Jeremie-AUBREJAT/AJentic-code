@@ -10,7 +10,9 @@ def clean_json(text):
     if not text:
         return None
 
-    text = text.replace("```json", "").replace("```", "").strip()
+    text = text.replace("```json", "")
+    text = text.replace("```", "")
+    text = text.strip()
 
     match = re.search(r"\{.*\}", text, re.DOTALL)
 
@@ -27,30 +29,46 @@ def ask_llm(prompt):
             {
                 "role": "system",
                 "content": (
-                    "Tu es un analyseur de code WordPress expert. "
-                    "Tu dois répondre UNIQUEMENT en JSON valide strict."
+                    "Tu es un analyseur expert de plugins WordPress. "
+                    "Tu dois répondre UNIQUEMENT en JSON strict."
                 )
             },
-            {"role": "user", "content": prompt}
+            {
+                "role": "user",
+                "content": prompt
+            }
         ],
         "mode": "instruct",
-        "temperature": 0.2,
+        "temperature": 0.1,
         "max_tokens": 8192
     }
 
-    r = requests.post(OOBABOOGA_API, json=payload, timeout=1200)
-
     try:
+
+        r = requests.post(
+            OOBABOOGA_API,
+            json=payload,
+            timeout=1200
+        )
+
         data = r.json()
+
         raw = data["choices"][0]["message"]["content"]
-    except:
-        return {"error": "api_error"}
+
+    except Exception as e:
+
+        return {
+            "error": "api_error",
+            "details": str(e)
+        }
 
     cleaned = clean_json(raw)
 
     try:
         return json.loads(cleaned)
-    except:
+
+    except Exception:
+
         return {
             "error": "invalid_json",
             "raw_response": raw
