@@ -1,266 +1,812 @@
-<html><head><meta charset='utf-8'><title>Plugin Documentation</title>
+<html>
+<head>
+<meta charset='utf-8'>
+<title>Plugin Documentation</title>
 
     <style>
-        body { font-family: Arial; background:#111; color:#eee; padding:20px; }
-        h1,h2 { color:#4fc3f7; }
-        .file { background:#1e1e1e; padding:10px; margin:10px 0; border-radius:8px; }
-        pre { background:#000; padding:10px; overflow:auto; }
-        .box { margin-bottom:20px; }
+    body { font-family: Arial; background:#111; color:#eee; padding:20px; }
+    h1 { color:#4fc3f7; }
+    h2 { color:#81d4fa; }
+    .file { background:#1e1e1e; padding:15px; margin-bottom:20px; border-radius:8px; }
+    .section { margin-bottom:10px; }
+    pre { background:#000; padding:10px; overflow:auto; }
     </style>
     
-</head><body>
+</head>
+<body>
 <h1>Plugin Documentation</h1>
-<p>Generated: 2026-04-27 11:02:19.823781</p>
+<p>Generated: 2026-04-27 12:55:52.090831</p>
 <div class='file'>
 <h2>workspace\project\contact-form-7-dynamic-text-extension\contact-form-7-dynamic-text-extension.php</h2>
+<div class='section'>
+<b>language</b>
 <pre>
-language
+"php"
 </pre>
+</div>
+<div class='section'>
+<b>classes</b>
 <pre>
-classes
+[]
 </pre>
+</div>
+<div class='section'>
+<b>functions</b>
 <pre>
-functions
+[
+  "wpcf7dtx_dependencies",
+  "wpcf7dtx_init",
+  "wpcf7dtx_hidden_field",
+  "wpcf7dtx_config",
+  "wpcf7dtx_builtin_shortcodes_config",
+  "wpcf7dtx_add_shortcodes",
+  "wpcf7dtx_enqueue_frontend_assets",
+  "wpcf7dtx_shortcode_handler",
+  "wpcf7dtx_button_shortcode_handler",
+  "wpcf7dtx_label_shortcode_handler",
+  "wpcf7dtx_js_handler"
+]
 </pre>
+</div>
+<div class='section'>
+<b>hooks</b>
 <pre>
-hooks
+[
+  "admin_notices",
+  "wpcf7_init",
+  "wpcf7_form_hidden_fields",
+  "wp_enqueue_scripts",
+  "wp_ajax_wpcf7dtx",
+  "wp_ajax_nopriv_wpcf7dtx",
+  "wpcf7_validate_text*",
+  "wpcf7_validate_hidden*",
+  "wpcf7_validate_submit*",
+  "wpcf7_validate_label*"
+]
 </pre>
+</div>
+<div class='section'>
+<b>ajax</b>
 <pre>
-ajax
+[
+  "wpcf7dtx_js_handler"
+]
 </pre>
+</div>
+<div class='section'>
+<b>logic</b>
 <pre>
-logic
+[
+  "Dependency checking (verifies minimum CF7 version requirements)",
+  "Plugin initialization and hook setup (runs on plugins_loaded)",
+  "Field type configuration (defines all supported dynamic field types like text, select, radio, etc.)",
+  "Custom CF7 shortcode registration (registers handlers for dynamic fields and built-in functions)",
+  "Frontend asset enqueuing (registers and queues the main JavaScript file)",
+  "Dynamic value retrieval (uses helper functions to fetch values from $_GET, $_POST, URL, Post Meta, User, etc.)",
+  "HTML rendering and attribute generation (core logic within shortcode handlers, handling validation classes, required attributes, and field-specific properties)",
+  "AJAX evaluation (handles frontend requests to dynamically calculate shortcode values via JavaScript)"
+]
 </pre>
+</div>
 </div>
 <div class='file'>
 <h2>workspace\project\contact-form-7-dynamic-text-extension\index.php</h2>
+<div class='section'>
+<b>language</b>
 <pre>
-language
+"php"
 </pre>
+</div>
+<div class='section'>
+<b>classes</b>
 <pre>
-classes
+[]
 </pre>
+</div>
+<div class='section'>
+<b>functions</b>
 <pre>
-functions
+[]
 </pre>
+</div>
+<div class='section'>
+<b>hooks</b>
 <pre>
-hooks
+[]
 </pre>
+</div>
+<div class='section'>
+<b>ajax</b>
 <pre>
-ajax
+[]
 </pre>
+</div>
+<div class='section'>
+<b>logic</b>
 <pre>
-logic
+[
+  "Initialisation du fichier PHP (placeholder)"
+]
 </pre>
+</div>
 </div>
 <div class='file'>
 <h2>workspace\project\contact-form-7-dynamic-text-extension\assets\scripts\dtx.js</h2>
+<div class='section'>
+<b>language</b>
 <pre>
-language
+"js"
 </pre>
+</div>
+<div class='section'>
+<b>classes</b>
 <pre>
-classes
+[
+  "dtx"
+]
 </pre>
+</div>
+<div class='section'>
+<b>functions</b>
 <pre>
-functions
+[
+  "dtx.init",
+  "dtx.validKey",
+  "dtx.obfuscate",
+  "dtx.set",
+  "dtx.get",
+  "dtx.referrer",
+  "dtx.current_url",
+  "dtx.get_cookie",
+  "dtx.guid"
+]
 </pre>
+</div>
+<div class='section'>
+<b>hooks</b>
 <pre>
-hooks
+[
+  "$(document).ready()",
+  "dtx_init"
+]
 </pre>
+</div>
+<div class='section'>
+<b>ajax</b>
 <pre>
-ajax
+[
+  {
+    "type": "POST",
+    "url": "dtx_obj.ajax_url",
+    "action": "wpcf7dtx",
+    "data_keys": [
+      "shortcodes",
+      "n"
+    ]
+  }
+]
 </pre>
+</div>
+<div class='section'>
+<b>logic</b>
 <pre>
-logic
+[
+  "Initialization: Scans for input fields with class 'dtx-pageload' and 'data-dtx-value' upon document ready.",
+  "Value Parsing: Decodes and parses the 'data-dtx-value' string into a tag and key/value attributes.",
+  "Value Calculation: Executes specific functions based on the tag (e.g., CF7_GET, CF7_referrer, CF7_URL, CF7_get_cookie, CF7_guid).",
+  "Caching/Bypass Logic: For certain tags (like CF7_get_post_var), it skips immediate calculation, assuming the server has already provided the correct value.",
+  "AJAX Queueing: If a value cannot be calculated immediately, it is pushed into the 'dtx.queue' array.",
+  "Asynchronous Loading: After scanning, if the queue is populated, it triggers an AJAX call to fetch the remaining values from the server.",
+  "AJAX Success Handling: On successful AJAX response, it iterates through the returned data and updates the corresponding input fields using dtx.set().",
+  "Utility Logic: Implements obfuscation (HTML entity encoding) and GUID generation (using crypto API or fallback methods)."
+]
 </pre>
+</div>
 </div>
 <div class='file'>
 <h2>workspace\project\contact-form-7-dynamic-text-extension\assets\scripts\dtx.min.js</h2>
+<div class='section'>
+<b>language</b>
 <pre>
-language
+"js"
 </pre>
+</div>
+<div class='section'>
+<b>classes</b>
 <pre>
-classes
+[
+  "dtx"
+]
 </pre>
+</div>
+<div class='section'>
+<b>functions</b>
 <pre>
-functions
+[
+  "dtx.init",
+  "dtx.validKey",
+  "dtx.obfuscate",
+  "dtx.set",
+  "dtx.get",
+  "dtx.referrer",
+  "dtx.current_url",
+  "dtx.get_cookie",
+  "dtx.guid"
+]
 </pre>
+</div>
+<div class='section'>
+<b>hooks</b>
 <pre>
-hooks
+[
+  "$(document).ready()",
+  "dtx_init"
+]
 </pre>
+</div>
+<div class='section'>
+<b>ajax</b>
 <pre>
-ajax
+[
+  {
+    "type": "POST",
+    "url": "dtx_obj.ajax_url",
+    "action": "wpcf7dtx",
+    "data_keys": [
+      "shortcodes",
+      "n"
+    ],
+    "dataType": "json"
+  }
+]
 </pre>
+</div>
+<div class='section'>
+<b>logic</b>
 <pre>
-logic
+[
+  "Initialization: Scans for elements with class 'dtx-pageload' and attribute 'data-dtx-value'.",
+  "Token Parsing: Decodes and splits the 'data-dtx-value' string into tokens (e.g., 'CF7_GET', 'key=value').",
+  "Token Resolution: Executes specific functions based on the token prefix (e.g., CF7_GET, CF7_URL) to retrieve data (URL parameters, referrer, cookies, etc.).",
+  "Queueing: Stores unresolved tokens in dtx.queue.",
+  "Asynchronous Loading: After a 10ms delay, sends queued tokens to the server via AJAX.",
+  "AJAX Processing: On success, iterates through the returned data and updates the corresponding input fields by adding the 'dtx-ajax-loaded' class and setting the final value.",
+  "Utility: Implements HTML entity obfuscation (dtx.obfuscate) and GUID generation (dtx.guid)."
+]
 </pre>
+</div>
 </div>
 <div class='file'>
 <h2>workspace\project\contact-form-7-dynamic-text-extension\assets\scripts\tag-generator.js</h2>
+<div class='section'>
+<b>language</b>
 <pre>
-language
+"js"
 </pre>
+</div>
+<div class='section'>
+<b>classes</b>
 <pre>
-classes
+[
+  "dtx-form-tag",
+  "dtx-option"
+]
 </pre>
+</div>
+<div class='section'>
+<b>functions</b>
 <pre>
-functions
+[
+  "wpcf7dtx_taggen.replaceAll",
+  "wpcf7dtx_taggen.updateOption"
+]
 </pre>
+</div>
+<div class='section'>
+<b>hooks</b>
 <pre>
-hooks
+[]
 </pre>
+</div>
+<div class='section'>
+<b>ajax</b>
 <pre>
-ajax
+[]
 </pre>
+</div>
+<div class='section'>
+<b>logic</b>
 <pre>
-logic
+[
+  "DOM Class Assignment (Tag Generator Buttons)",
+  "String Replacement (replaceAll)",
+  "Input Encoding & Field Update (updateOption)",
+  "Event Listener Binding (change, keyup, click)"
+]
 </pre>
+</div>
 </div>
 <div class='file'>
 <h2>workspace\project\contact-form-7-dynamic-text-extension\assets\scripts\tag-generator.min.js</h2>
+<div class='section'>
+<b>language</b>
 <pre>
-language
+"js"
 </pre>
+</div>
+<div class='section'>
+<b>classes</b>
 <pre>
-classes
+[
+  "dtx-form-tag",
+  "button",
+  "button-secondary",
+  "tag-generator-list",
+  "tag-generator-panel",
+  "dtx-option"
+]
 </pre>
+</div>
+<div class='section'>
+<b>functions</b>
 <pre>
-functions
+[
+  "replaceAll",
+  "updateOption"
+]
 </pre>
+</div>
+<div class='section'>
+<b>hooks</b>
 <pre>
-hooks
+[
+  "change",
+  "keyup",
+  "click"
+]
 </pre>
+</div>
+<div class='section'>
+<b>ajax</b>
 <pre>
-ajax
+[]
 </pre>
+</div>
+<div class='section'>
+<b>logic</b>
 <pre>
-logic
+[
+  "Initialisation via IIFE (Immediately Invoked Function Expression) binding to jQuery.",
+  "Adds 'dtx-form-tag' class to buttons within '.tag-generator-list' that target dynamic panels.",
+  "Adds 'button' and 'button-secondary' classes to close dialog buttons.",
+  "Defines 'replaceAll' utility function for robust string replacement, supporting optional global regex replacement.",
+  "Defines 'updateOption' function which sanitizes the current value of an element using 'replaceAll', URL-encodes it, and updates a sibling hidden input field (data-tag-part='option'), triggering a 'change' event on that input.",
+  "Binds the 'updateOption' function to the 'change', 'keyup', and 'click' events of elements with the class '.dtx-option' located within the tag generator form panel."
+]
 </pre>
+</div>
 </div>
 <div class='file'>
 <h2>workspace\project\contact-form-7-dynamic-text-extension\includes\admin.php</h2>
+<div class='section'>
+<b>language</b>
 <pre>
-language
+"php"
 </pre>
+</div>
+<div class='section'>
+<b>classes</b>
 <pre>
-classes
+[
+  "WPCF7DTX\\TagGenerator"
+]
 </pre>
+</div>
+<div class='section'>
+<b>functions</b>
 <pre>
-functions
+[
+  "instance",
+  "construct",
+  "dependency",
+  "load_assets",
+  "init",
+  "default_input_atts",
+  "allowed_tags",
+  "get_legend_id",
+  "input",
+  "field",
+  "text",
+  "checkbox",
+  "doc_link",
+  "render"
+]
 </pre>
+</div>
+<div class='section'>
+<b>hooks</b>
 <pre>
-hooks
+[
+  "admin_enqueue_scripts",
+  "wpcf7_admin_init"
+]
 </pre>
+</div>
+<div class='section'>
+<b>ajax</b>
 <pre>
-ajax
+[]
 </pre>
+</div>
+<div class='section'>
+<b>logic</b>
 <pre>
-logic
+[
+  "Singleton Pattern implementation (via static instance())",
+  "Dependency check (verifies CF7 version >= 6.0)",
+  "Conditional asset loading (CSS/JS) based on admin hook and dependency",
+  "Initialization loop (iterates through wpcf7dtx_config() to register generators)",
+  "Orchestrated HTML rendering flow (render() method calls field(), input(), etc.)",
+  "Complex attribute handling and option logic within input() (managing data-tag-part and data-tag-option)",
+  "Extensive conditional rendering based on field type (tag_type) to display relevant options (e.g., minlength, multiple, readonly)",
+  "Management of allowed HTML tags and attributes across different contexts (header, footer, control-box) via allowed_tags()",
+  "URL generation with UTM parameters (doc_link())"
+]
 </pre>
+</div>
 </div>
 <div class='file'>
 <h2>workspace\project\contact-form-7-dynamic-text-extension\includes\shortcodes.php</h2>
+<div class='section'>
+<b>language</b>
 <pre>
-language
+"php"
 </pre>
+</div>
+<div class='section'>
+<b>classes</b>
 <pre>
-classes
+[]
 </pre>
+</div>
+<div class='section'>
+<b>functions</b>
 <pre>
-functions
+[
+  "wpcf7dtx_init_shortcodes",
+  "wpcf7dtx_get",
+  "wpcf7dtx_post",
+  "wpcf7dtx_url",
+  "wpcf7dtx_referrer",
+  "wpcf7dtx_bloginfo",
+  "wpcf7dtx_get_post_var",
+  "wpcf7dtx_get_custom_field",
+  "wpcf7dtx_get_current_var",
+  "wpcf7dtx_get_current_user",
+  "wpcf7dtx_get_attachment",
+  "wpcf7dtx_get_cookie",
+  "wpcf7dtx_get_taxonomy",
+  "wpcf7dtx_get_theme_option",
+  "wpcf7dtx_guid"
+]
 </pre>
+</div>
+<div class='section'>
+<b>hooks</b>
 <pre>
-hooks
+[
+  "init",
+  "wpcf7dtx_shortcode",
+  "wpcf7dtx_escape",
+  "wpcf7dtx_sanitize"
+]
 </pre>
+</div>
+<div class='section'>
+<b>ajax</b>
 <pre>
-ajax
+[
+  "wp_doing_ajax"
+]
 </pre>
+</div>
+<div class='section'>
+<b>logic</b>
 <pre>
-logic
+[
+  "Initialisation des shortcodes (CF7_GET, CF7_POST, CF7_URL, etc.) sur le hook 'init'.",
+  "Récupération de variables depuis les paramètres GET ($_GET).",
+  "Récupération de variables depuis les données POST ($_POST).",
+  "Extraction des composants de l'URL actuelle (schéma, hôte, chemin, requête) via CF7_URL.",
+  "Récupération de l'URL de référence (HTTP_REFERER) via CF7_referrer.",
+  "Récupération des informations globales du blog (nom, etc.) via CF7_bloginfo.",
+  "Récupération de données spécifiques à un post (titre, etc.) via CF7_get_post_var.",
+  "Récupération de métadonnées personnalisées d'un post via CF7_get_custom_field.",
+  "Récupération de données dynamiques basées sur l'objet actuel (utilisateur, post, terme, archive) via CF7_get_current_var.",
+  "Récupération des données de l'utilisateur connecté via CF7_get_current_user.",
+  "Récupération des informations d'un média/attachement (ID ou URL) via CF7_get_attachment.",
+  "Récupération de la valeur d'un cookie via CF7_get_cookie.",
+  "Récupération des termes d'une taxonomie pour un post via CF7_get_taxonomy.",
+  "Récupération d'une option de personnalisation du thème via CF7_get_theme_option.",
+  "Génération d'un identifiant unique (GUID) via CF7_guid.",
+  "Utilisation intensive de fonctions de filtrage et de nettoyage de WordPress (apply_filters, sanitize_text_field, etc.) pour sécuriser les sorties."
+]
 </pre>
+</div>
 </div>
 <div class='file'>
 <h2>workspace\project\contact-form-7-dynamic-text-extension\includes\utilities.php</h2>
+<div class='section'>
+<b>language</b>
 <pre>
-language
+"php"
 </pre>
+</div>
+<div class='section'>
+<b>classes</b>
 <pre>
-classes
+[]
 </pre>
+</div>
+<div class='section'>
+<b>functions</b>
 <pre>
-functions
+[
+  "wpcf7dtx_allow_protocols",
+  "wpcf7dtx_sanitize",
+  "wpcf7dtx_escape",
+  "wpcf7dtx_detect_value_type",
+  "wpcf7dtx_obfuscate",
+  "wpcf7dtx_validate_post_id",
+  "wpcf7dtx_user_can_view_post",
+  "wpcf7dtx_get_post_id",
+  "wpcf7dtx_get_dynamic",
+  "wpcf7dtx_get_dynamic_attr",
+  "wpcf7dtx_dynamic_attr",
+  "wpcf7dtx_get_allowed_field_properties",
+  "wpcf7dtx_format_atts",
+  "wpcf7dtx_input_html",
+  "wpcf7dtx_checkbox_html",
+  "wpcf7dtx_checkbox_group_html",
+  "wpcf7dtx_textarea_html",
+  "wpcf7dtx_options_html",
+  "wpcf7dtx_select_html",
+  "wpcf7dtx_array_has_key",
+  "wpcf7dtx_post_meta_key_access_is_allowed",
+  "wpcf7dtx_user_data_access_is_allowed",
+  "wpcf7dtx_parse_allowed_keys",
+  "wpcf7dtx_split_newlines",
+  "wpcf7dtx_get_settings",
+  "wpcf7dtx_update_settings",
+  "wpcf7dtx_access_denied_alert"
+]
 </pre>
+</div>
+<div class='section'>
+<b>hooks</b>
 <pre>
-hooks
+[
+  "wpcf7dtx_allow_protocols",
+  "wpcf7dtx_sanitize",
+  "wpcf7dtx_escape",
+  "wpcf7dtx_obfuscate"
+]
 </pre>
+</div>
+<div class='section'>
+<b>ajax</b>
 <pre>
-ajax
+[
+  "wpcf7dtx_get_post_id",
+  "wpcf7dtx_access_denied_alert"
+]
 </pre>
+</div>
+<div class='section'>
+<b>logic</b>
 <pre>
-logic
+[
+  "Protocol Management: Handles allowing/merging/replacing allowed protocols via `wpcf7dtx_allow_protocols`.",
+  "Data Transformation: Core sanitization (`wpcf7dtx_sanitize`) and escaping (`wpcf7dtx_escape`) functions, relying on `wpcf7dtx_detect_value_type` to determine the appropriate WP sanitation/escaping function (email, url, key, slug, etc.).",
+  "Dynamic Content Retrieval: `wpcf7dtx_get_dynamic` fetches and evaluates dynamic values, including shortcodes. `wpcf7dtx_get_dynamic_attr` handles dynamic attribute generation, especially for CSS classes.",
+  "Post ID Resolution: `wpcf7dtx_get_post_id` retrieves the current post ID, intelligently handling cases where the ID is not provided, and specifically checks if the request is AJAX.",
+  "Access Control: `wpcf7dtx_user_can_view_post` checks if the current user has permission to view a given post ID based on public status, password protection, or user capabilities.",
+  "HTML Generation: Multiple functions (`wpcf7dtx_input_html`, `wpcf7dtx_checkbox_html`, `wpcf7dtx_select_html`, etc.) construct complex HTML form elements by formatting attributes (`wpcf7dtx_format_atts`) and applying necessary escaping/sanitization.",
+  "Settings Persistence: Manages plugin configuration via `wpcf7dtx_get_settings` and `wpcf7dtx_update_settings` (using `get_option`/`update_option`).",
+  "Key Access Control: `wpcf7dtx_post_meta_key_access_is_allowed` and `wpcf7dtx_user_data_access_is_allowed` enforce granular access control based on configured allow-lists (post meta or user data).",
+  "Error/Warning Handling: `wpcf7dtx_access_denied_alert` triggers a PHP warning when a dynamic key is accessed but not explicitly allowed in the settings."
+]
 </pre>
+</div>
 </div>
 <div class='file'>
 <h2>workspace\project\contact-form-7-dynamic-text-extension\includes\validation.php</h2>
+<div class='section'>
+<b>language</b>
 <pre>
-language
+"php"
 </pre>
+</div>
+<div class='section'>
+<b>classes</b>
 <pre>
-classes
+[
+  "WPCF7_Validation",
+  "WPCF7_FormTag",
+  "WPCF7_ConfigValidator",
+  "WPCF7_FormTagsManager"
+]
 </pre>
+</div>
+<div class='section'>
+<b>functions</b>
 <pre>
-functions
+[
+  "wpcf7dtx_messages",
+  "wpcf7dtx_config_validator_available_error_codes",
+  "wpcf7dtx_validation_filter",
+  "wpcf7dtx_validate_value",
+  "wpcf7dtx_validate",
+  "wpcf7dtx_init_validator",
+  "wpcf7dtx_validate_sensitive_value"
+]
 </pre>
+</div>
+<div class='section'>
+<b>hooks</b>
 <pre>
-hooks
+[
+  "wpcf7_messages",
+  "wpcf7_config_validator_available_error_codes",
+  "wpcf7_config_validator_validate",
+  "plugins_loaded"
+]
 </pre>
+</div>
+<div class='section'>
+<b>ajax</b>
 <pre>
-ajax
+[]
 </pre>
+</div>
+<div class='section'>
+<b>logic</b>
 <pre>
-logic
+[
+  "Extends/modifies default Contact Form 7 messages using the 'wpcf7_messages' filter, adding specific DTX error messages (email, tel, number, date).",
+  "Adds a custom error code ('dtx_disallowed') to the list of available validation errors in CF7 via 'wpcf7_config_validator_available_error_codes'.",
+  "Implements frontend validation via 'wpcf7_config_validator_validate' (indirectly). It handles input sanitization, checks for required fields, and validates values based on their type (email, tel, number, date) and length constraints.",
+  "Handles complex field types in frontend validation, specifically checking for 'selectable-values' and 'multiple-controls-container' support.",
+  "Implements backend validation via 'wpcf7_config_validator_validate'. It iterates through all form tags to check for sensitive data access in default/placeholder values using 'wpcf7dtx_validate_sensitive_value'.",
+  "Handles specific mail configuration errors (e.g., 'invalid-mailbox-syntax', 'maybe_empty') by overriding or adding errors during backend validation.",
+  "The 'wpcf7dtx_validate_sensitive_value' function parses shortcodes and checks if the requested 'key' is permitted for the given shortcode (e.g., 'CF7_get_custom_field', 'CF7_get_current_user').",
+  "The 'wpcf7dtx_init_validator' function ensures the main validation hook is registered only after dependencies are met."
+]
 </pre>
+</div>
 </div>
 <div class='file'>
 <h2>workspace\project\contact-form-7-dynamic-text-extension\includes\admin\settings.php</h2>
+<div class='section'>
+<b>language</b>
 <pre>
-language
+"php"
 </pre>
+</div>
+<div class='section'>
+<b>classes</b>
 <pre>
-classes
+[
+  "CF7DTX_Plugin_Settings"
+]
 </pre>
+</div>
+<div class='section'>
+<b>functions</b>
 <pre>
-functions
+[
+  "wpcf7dtx_get_admin_scan_screen_url",
+  "wpcf7dtx_get_admin_settings_screen_url",
+  "wpcf7dtx_scan_forms_for_access_keys",
+  "CF7DTX_Plugin_Settings::__construct",
+  "CF7DTX_Plugin_Settings::fields",
+  "CF7DTX_Plugin_Settings::sections",
+  "CF7DTX_Plugin_Settings::settings_init",
+  "CF7DTX_Plugin_Settings::options_page",
+  "CF7DTX_Plugin_Settings::render_options_page",
+  "CF7DTX_Plugin_Settings::render_field",
+  "CF7DTX_Plugin_Settings::render_section",
+  "CF7DTX_Plugin_Settings::render_scan_results",
+  "CF7DTX_Plugin_Settings::handle_save_allows",
+  "CF7DTX_Plugin_Settings::render_allow_keys_submission",
+  "CF7DTX_Plugin_Settings::render_back_to_settings_button"
+]
 </pre>
+</div>
+<div class='section'>
+<b>hooks</b>
 <pre>
-hooks
+[
+  "admin_init",
+  "admin_menu"
+]
 </pre>
+</div>
+<div class='section'>
+<b>ajax</b>
 <pre>
-ajax
+[
+  "settings_save_allows"
+]
 </pre>
+</div>
+<div class='section'>
+<b>logic</b>
 <pre>
-logic
+[
+  "Settings registration and rendering (Admin Menu/Page)",
+  "Form scanning for dynamic text keys (Meta & User) using CF7_get_custom_field and CF7_get_current_user shortcodes",
+  "Comparison of scanned keys against existing allow lists (Meta and User)",
+  "Handling of settings save submissions (merging new keys into existing allow lists)",
+  "Dynamic rendering of scan results and key selection UI based on scan outcome"
+]
 </pre>
+</div>
 </div>
 <div class='file'>
 <h2>workspace\project\contact-form-7-dynamic-text-extension\includes\admin\update-check.php</h2>
+<div class='section'>
+<b>language</b>
 <pre>
-language
-</pre>
-<pre>
-classes
-</pre>
-<pre>
-functions
-</pre>
-<pre>
-hooks
-</pre>
-<pre>
-ajax
-</pre>
-<pre>
-logic
+"php"
 </pre>
 </div>
-</body></html>
+<div class='section'>
+<b>classes</b>
+<pre>
+[]
+</pre>
+</div>
+<div class='section'>
+<b>functions</b>
+<pre>
+[
+  "wpcf7dtx_update_check",
+  "wpcf7dtx_update",
+  "wpcf7dtx_v4_2_0_access_scan_check",
+  "wpcf7dtx_access_keys_notice",
+  "wpcf7dtx_set_update_access_scan_check_status"
+]
+</pre>
+</div>
+<div class='section'>
+<b>hooks</b>
+<pre>
+[
+  "plugins_loaded (wpcf7dtx_update_check)",
+  "admin_init (wpcf7dtx_update)",
+  "admin_notices (wpcf7dtx_access_keys_notice)"
+]
+</pre>
+</div>
+<div class='section'>
+<b>ajax</b>
+<pre>
+[]
+</pre>
+</div>
+<div class='section'>
+<b>logic</b>
+<pre>
+[
+  "Version Check: On plugin load, compares the hardcoded plugin version (WPCF7DTX_VERSION) against the stored database version ('cf7dtx_version'). If they differ, it updates the DB and schedules the update handler for 'admin_init'.",
+  "Update Handler: Runs on 'admin_init' and triggers the access key scan check.",
+  "Access Scan Check: Runs on 'admin_init'. Checks if the scan status option is set. If not, it scans up to 20 forms using 'wpcf7dtx_scan_forms_for_access_keys'. It sets the status to 'intervention_required' if keys are found or if the maximum scan limit (20) is reached, otherwise 'intervention_not_required'.",
+  "Admin Notice Display: Runs on 'admin_notices'. Checks if the current user is an administrator and if the scan status requires intervention. If so, it displays a detailed error notice with links to settings, scanning, and more information.",
+  "Status Management: Provides a helper function ('wpcf7dtx_set_update_access_scan_check_status') to easily update the scan status option in the database."
+]
+</pre>
+</div>
+</div>
+</body>
+</html>

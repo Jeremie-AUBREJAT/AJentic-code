@@ -21,27 +21,34 @@ def analyze_file(file_path):
         code = f.read()
 
     prompt = f"""
-Tu es un expert en analyse de plugins WordPress (PHP + JavaScript).
+You are a WordPress plugin code analyzer.
 
-Analyse ce fichier COMPLET.
+Analyze the following file.
 
-Retourne STRICTEMENT un JSON valide avec cette structure :
+Return STRICT JSON with this structure:
 
 {{
-  "language": "php|js|unknown",
-  "classes": [],
-  "functions": [],
-  "hooks": [],
-  "ajax": [],
-  "logic": []
+ "llm": {{
+  "lang":"php|js|unknown",
+  "cls":[],
+  "fn":[],
+  "hk":[],
+  "ax":[],
+  "lg":[]
+ }},
+ "doc": {{
+  "summary":"",
+  "features":[],
+  "notes":[]
+ }}
 }}
 
-RÈGLES :
-- JSON strict uniquement
-- aucun markdown
-- aucune explication
-- pas d'invention
-- si inconnu => tableau vide
+Rules:
+- JSON only
+- no explanation
+- no markdown
+- no invention
+- unknown => empty array
 
 CODE:
 {code}
@@ -50,130 +57,133 @@ CODE:
     result = ask_llm(prompt)
 
     if not isinstance(result, dict):
+
         return {
-            "language": "unknown",
-            "classes": [],
-            "functions": [],
-            "hooks": [],
-            "ajax": [],
-            "logic": [],
-            "raw_error": result
+            "llm": {
+                "lang": "unknown",
+                "cls": [],
+                "fn": [],
+                "hk": [],
+                "ax": [],
+                "lg": []
+            },
+            "doc": {
+                "summary": "analysis_error",
+                "features": [],
+                "notes": [str(result)]
+            }
         }
 
     return result
 
 
 # ---------------------------
-# BUILD GLOBAL ANALYSIS
+# BUILD GLOBAL ANALYSIS (LLM)
 # ---------------------------
-def build_global_analysis(results):
+def build_global_llm(results):
 
-    global_analysis = {
-        "classes": [],
-        "functions": [],
-        "hooks": [],
-        "ajax": [],
-        "logic": [],
-        "entrypoints": [],
-        "hook_map": [],
-        "execution_graph": [],
-        "data_flow": [],
-        "state_model": [],
-        "data_sinks": []
+    g = {
+        "cls": set(),
+        "fn": set(),
+        "hk": set(),
+        "ax": set(),
+        "entry": set(),
+        "flow": [],
+        "sink": []
     }
 
     for file in results:
 
         path = file["file"]
-        data = file.get("analysis", {})
 
-        classes = data.get("classes", [])
-        functions = data.get("functions", [])
-        hooks = data.get("hooks", [])
-        ajax = data.get("ajax", [])
-        logic = data.get("logic", [])
+        data = file["analysis"].get("llm", {})
 
-        global_analysis["classes"] += classes
-        global_analysis["functions"] += functions
-        global_analysis["hooks"] += hooks
-        global_analysis["ajax"] += ajax
-        global_analysis["logic"] += logic
+        cls = data.get("cls", [])
+        fn = data.get("fn", [])
+        hk = data.get("hk", [])
+        ax = data.get("ax", [])
+        lg = data.get("lg", [])
 
-        # ENTRYPOINTS
-        for h in hooks:
-            global_analysis["entrypoints"].append(h)
+        for c in cls:
+            g["cls"].add(c)
 
-        # HOOK MAP
-        for h in hooks:
-            for f in functions:
-                global_analysis["hook_map"].append({
-                    "hook": h,
-                    "function": f,
-                    "file": path
-                })
+        for f in fn:
+            g["fn"].add(f)
 
-        # EXECUTION GRAPH
-        for h in hooks:
-            for f in functions:
-                global_analysis["execution_graph"].append({
-                    "entrypoint": h,
-                    "function": f,
-                    "file": path
-                })
+        for h in hk:
+            g["hk"].add(h)
+            g["entry"].add(h)
 
-        # DATA FLOW (AJAX)
-        for a in ajax:
-            global_analysis["data_flow"].append({
+        for a in ax:
+            g["ax"].add(str(a))
+
+        # data flow
+        for a in ax:
+            g["flow"].append({
                 "type": "ajax",
-                "endpoint": a,
+                "ep": a,
                 "file": path
             })
 
-        # DATA SINKS
-        for l in logic:
+        # sinks detection
+        for l in lg:
 
-            lower = l.lower()
+            s = l.lower()
 
-            if "wpdb" in lower or "database" in lower or "table" in lower:
-                global_analysis["data_sinks"].append({
-                    "type": "database",
-                    "description": l,
+            if "wpdb" in s or "database" in s or "table" in s:
+                g["sink"].append({
+                    "type": "db",
                     "file": path
                 })
 
-            if "cookie" in lower:
-                global_analysis["data_sinks"].append({
+            if "cookie" in s:
+                g["sink"].append({
                     "type": "cookie",
-                    "description": l,
                     "file": path
                 })
 
-            if "ajax" in lower:
-                global_analysis["data_sinks"].append({
-                    "type": "ajax",
-                    "description": l,
-                    "file": path
-                })
-
-            if "post" in lower or "get" in lower:
-                global_analysis["state_model"].append({
-                    "type": "request_state",
-                    "description": l,
-                    "file": path
-                })
-
-    return global_analysis
+    return {
+        "cls": list(g["cls"]),
+        "fn": list(g["fn"]),
+        "hk": list(g["hk"]),
+        "ax": list(g["ax"]),
+        "entry": list(g["entry"]),
+        "flow": g["flow"],
+        "sink": g["sink"]
+    }
 
 
 # ---------------------------
-# SAVE JSON
+# BUILD DOC DATA
+# ---------------------------
+def build_doc(results):
+
+    doc = []
+
+    for r in results:
+
+        f = r["file"]
+        d = r["analysis"].get("doc", {})
+
+        doc.append({
+            "file": f,
+            "summary": d.get("summary", ""),
+            "features": d.get("features", []),
+            "notes": d.get("notes", [])
+        })
+
+    return doc
+
+
+# ---------------------------
+# SAVE JSON (compact)
 # ---------------------------
 def save_output(data):
 
     os.makedirs("output", exist_ok=True)
 
     with open("output/result.json", "w", encoding="utf-8") as f:
-        json.dump(data, f, indent=2, ensure_ascii=False)
+        json.dump(data, f, separators=(",", ":"), ensure_ascii=False)
 
 
 # ---------------------------
@@ -203,13 +213,15 @@ def run_analysis(input_path):
             "analysis": analysis
         })
 
-    global_analysis = build_global_analysis(results)
+    llm_global = build_global_llm(results)
+
+    doc_data = build_doc(results)
 
     final = {
-        "input_type": input_type,
-        "files_analyzed": len(results),
-        "results": results,
-        "global_analysis": global_analysis
+        "type": input_type,
+        "files": len(results),
+        "llm": llm_global,
+        "doc": doc_data
     }
 
     save_output(final)

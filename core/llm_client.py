@@ -2,7 +2,7 @@ import requests
 import json
 import re
 
-OOBABOOGA_API = "http://127.0.0.1:5000/v1/chat/completions"
+DEFAULT_API = "http://127.0.0.1:5000/v1/chat/completions"
 
 
 def clean_json(text):
@@ -10,9 +10,7 @@ def clean_json(text):
     if not text:
         return None
 
-    text = text.replace("```json", "")
-    text = text.replace("```", "")
-    text = text.strip()
+    text = text.replace("```json", "").replace("```", "").strip()
 
     match = re.search(r"\{.*\}", text, re.DOTALL)
 
@@ -22,23 +20,19 @@ def clean_json(text):
     return text
 
 
-def ask_llm(prompt):
+def ask_llm(prompt, api_url=DEFAULT_API):
 
     payload = {
         "messages": [
             {
                 "role": "system",
-                "content": (
-                    "Tu es un analyseur expert de plugins WordPress. "
-                    "Tu dois répondre UNIQUEMENT en JSON strict."
-                )
+                "content": "WordPress plugin static analyzer. Output strict JSON only."
             },
             {
                 "role": "user",
                 "content": prompt
             }
         ],
-        "mode": "instruct",
         "temperature": 0.1,
         "max_tokens": 8192
     }
@@ -46,10 +40,12 @@ def ask_llm(prompt):
     try:
 
         r = requests.post(
-            OOBABOOGA_API,
+            api_url,
             json=payload,
             timeout=1200
         )
+
+        r.raise_for_status()
 
         data = r.json()
 
@@ -71,5 +67,5 @@ def ask_llm(prompt):
 
         return {
             "error": "invalid_json",
-            "raw_response": raw
+            "raw": raw
         }
