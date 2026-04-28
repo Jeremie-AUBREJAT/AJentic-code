@@ -19,6 +19,9 @@ SAVE_FULL = os.getenv("ANALYZER_SAVE_FULL", "0") in ("1", "true", "yes")
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
 
+# ---------------------------------------------------------
+# MASKING
+# ---------------------------------------------------------
 def _mask(s):
     if not s:
         return s
@@ -32,11 +35,15 @@ def _mask(s):
     return s
 
 
+# ---------------------------------------------------------
+# NORMALISATION DU JSON LLM
+# ---------------------------------------------------------
 def _normalize(resp):
     if not isinstance(resp, dict):
         return {"llm": {}, "doc": {"summary": "error"}}
 
     llm = resp.get("llm", {}) or {}
+
     return {
         "llm": {
             "lang": llm.get("lang", ""),
@@ -45,11 +52,17 @@ def _normalize(resp):
             "hk": llm.get("hk", []) or [],
             "ax": llm.get("ax", []) or [],
         },
-        "doc": {"summary": resp.get("doc", {}).get("summary", "")},
+        "doc": {
+            "summary": resp.get("doc", {}).get("summary", "")
+        }
     }
 
 
-def analyze_file(path: Path):
+# ---------------------------------------------------------
+# ANALYSE D’UN FICHIER
+# ---------------------------------------------------------
+def analyze_file(path: Path, provider=None, model=None, api_key=None, endpoint=None):
+
     try:
         code = path.read_text(encoding="utf-8", errors="ignore")
     except Exception as e:
@@ -60,90 +73,46 @@ def analyze_file(path: Path):
 
     code = _mask(code)
 
-    # on envoie le code brut au LLM, le prompt est géré dans llm_client.ask_llm
-    return _normalize(ask_llm(code))
+    # Appel LLM universel
+    resp = ask_llm(code, provider, model, api_key, endpoint)
+
+    return _normalize(resp)
 
 
+# ---------------------------------------------------------
+# POST-PROCESSING GLOBAL
+# ---------------------------------------------------------
 def _postprocess_llm_aggregates(g):
-    """
-    Nettoyage global après agrégation :
-    - vire tout le JS (dtx.*, setTimeout, document.ready)
-    - vire les fonctions WP génériques
-    - vire les fonctions CF7 génériques
-    - vire les hooks inventés
-    - vire les patterns
-    """
 
-    # 1) Classes JS / bruit
-    blacklist_classes = {
-        "dtx",
-        "wpcf7dtx_taggen",
-    }
+    blacklist_classes = {"dtx", "wpcf7dtx_taggen"}
 
-    # 2) Fonctions JS (préfixes)
-    blacklist_fn_prefix = (
-        "dtx.",
-    )
+    blacklist_fn_prefix = ("dtx.",)
+    blacklist_fn_exact = {"setTimeout"}
 
-    # 3) Fonctions JS exactes
-    blacklist_fn_exact = {
-        "setTimeout",
-    }
-
-    # 4) Fonctions WP génériques (hors plugin)
     blacklist_wp_generic = {
-        "array_merge",
-        "count",
-        "empty",
-        "implode",
-        "in_array",
-        "sanitize_text_field",
-        "sanitize_textarea_field",
-        "str_replace",
-        "strval",
-        "shortcode_parse_atts",
-        "prop",
+        "array_merge", "count", "empty", "implode", "in_array",
+        "sanitize_text_field", "sanitize_textarea_field",
+        "str_replace", "strval", "shortcode_parse_atts", "prop",
     }
 
-    # 5) Fonctions CF7 génériques
     blacklist_cf7_generic = {
-        "wpcf7_is_email",
-        "wpcf7_is_number",
-        "wpcf7_is_tel",
-        "wpcf7_is_date",
-        "wpcf7_count_code_units",
-        "wpcf7_get_message",
-        "wpcf7_get_hangover",
+        "wpcf7_is_email", "wpcf7_is_number", "wpcf7_is_tel",
+        "wpcf7_is_date", "wpcf7_count_code_units",
+        "wpcf7_get_message", "wpcf7_get_hangover",
     }
 
-    # 6) Hooks JS
-    blacklist_hooks_prefix = (
-        "document.",
-    )
-
-    # 7) Hooks inventés / bruit
+    blacklist_hooks_prefix = ("document.",)
     blacklist_hooks_exact = {
-        "post_meta_access",
-        "post_meta_allow_all",
-        "post_meta_allow_keys",
-        "user_data_access",
-        "user_data_allow_all",
-        "user_data_allow_keys",
+        "post_meta_access", "post_meta_allow_all", "post_meta_allow_keys",
+        "user_data_access", "user_data_allow_all", "user_data_allow_keys",
     }
 
-    # 8) AJAX inventés (pseudo endpoints)
-    blacklist_ajax_prefix = (
-        "wpcf7dtx_",
-    )
+    blacklist_ajax_prefix = ("wpcf7dtx_",)
 
-    # -------------------------
-    # FILTRAGE CLASSES
-    # -------------------------
+    # CLASSES
     g["cls"] = {c for c in g["cls"] if c not in blacklist_classes}
 
-    # -------------------------
-    # FILTRAGE FUNCTIONS
-    # -------------------------
+    # FUNCTIONS
     cleaned_fn = set()
     for f in g["fn"]:
         if f in blacklist_fn_exact:
@@ -157,9 +126,7 @@ def _postprocess_llm_aggregates(g):
         cleaned_fn.add(f)
     g["fn"] = cleaned_fn
 
-    # -------------------------
-    # FILTRAGE HOOKS
-    # -------------------------
+    # HOOKS
     cleaned_hooks = set()
     for h in g["hk"]:
         if h in blacklist_hooks_exact:
@@ -171,9 +138,7 @@ def _postprocess_llm_aggregates(g):
         cleaned_hooks.add(h)
     g["hk"] = cleaned_hooks
 
-    # -------------------------
-    # FILTRAGE AJAX
-    # -------------------------
+    # AJAX
     cleaned_ax = set()
     for a in g["ax"]:
         if any(a.startswith(p) for p in blacklist_ajax_prefix):
@@ -181,19 +146,18 @@ def _postprocess_llm_aggregates(g):
         cleaned_ax.add(a)
     g["ax"] = cleaned_ax
 
-    # -------------------------
-    # FLOW = AJAX filtré
-    # -------------------------
+    # FLOW
     g["flow"] = [a for a in g["flow"] if a in g["ax"]]
 
-    # -------------------------
-    # SINKS dédupliqués
-    # -------------------------
+    # SINKS
     g["sink"] = list(set(g["sink"]))
 
     return g
 
 
+# ---------------------------------------------------------
+# AGRÉGATION GLOBALE
+# ---------------------------------------------------------
 def build_global_llm(results):
     g = {"cls": set(), "fn": set(), "hk": set(), "ax": set(), "flow": [], "sink": []}
 
@@ -211,12 +175,8 @@ def build_global_llm(results):
             if "cookie" in s:
                 g["sink"].append("cookie")
             if (
-                "wpdb" in s
-                or "database" in s
-                or "get_post_meta" in s
-                or "get_user_meta" in s
-                or "get_option" in s
-                or "update_option" in s
+                "wpdb" in s or "database" in s or "get_post_meta" in s or
+                "get_user_meta" in s or "get_option" in s or "update_option" in s
             ):
                 g["sink"].append("db")
 
@@ -232,6 +192,9 @@ def build_global_llm(results):
     }
 
 
+# ---------------------------------------------------------
+# MINIMISATION POUR LLM
+# ---------------------------------------------------------
 def minimize_for_llm(final):
     llm = final["llm"]
 
@@ -252,6 +215,9 @@ def minimize_for_llm(final):
     }
 
 
+# ---------------------------------------------------------
+# SAUVEGARDE
+# ---------------------------------------------------------
 def save_output(data):
     out = Path(OUTPUT_DIR)
     out.mkdir(parents=True, exist_ok=True)
@@ -269,7 +235,11 @@ def save_output(data):
     )
 
 
-def run_analysis(input_path):
+# ---------------------------------------------------------
+# PIPELINE PRINCIPAL
+# ---------------------------------------------------------
+def run_analysis(input_path, provider, model=None, api_key=None, endpoint=None):
+
     input_type = detect_input(input_path)
     project_dir = extract_input(input_path, WORKSPACE)
     files = scan_codebase(project_dir)
@@ -277,7 +247,16 @@ def run_analysis(input_path):
     results = []
     for f in files:
         p = Path(f)
-        results.append({"file": str(p), "analysis": analyze_file(p)})
+        results.append({
+            "file": str(p),
+            "analysis": analyze_file(
+                p,
+                provider=provider,
+                model=model,
+                api_key=api_key,
+                endpoint=endpoint
+            )
+        })
 
     final = {
         "type": input_type,
@@ -289,13 +268,18 @@ def run_analysis(input_path):
 
     save_output(final)
     generate_html_doc(final)
+
     return final
 
 
+# ---------------------------------------------------------
+# MODE CLI
+# ---------------------------------------------------------
 if __name__ == "__main__":
     import sys
 
     if len(sys.argv) < 2:
         print("Usage: python main.py <input_path>")
         exit(2)
-    run_analysis(sys.argv[1])
+
+    run_analysis(sys.argv[1], provider="local")

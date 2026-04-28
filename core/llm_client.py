@@ -2,8 +2,6 @@ import requests
 import json
 import re
 
-DEFAULT_API = "http://127.0.0.1:5000/v1/chat/completions"
-
 
 def clean_json(text):
     if not text:
@@ -18,8 +16,45 @@ def clean_json(text):
     return text
 
 
-def ask_llm(code, api_url=DEFAULT_API):
+# ---------------------------------------------------------
+#  UNIVERSAL RESPONSE EXTRACTOR
+# ---------------------------------------------------------
+def extract_content(provider, data):
+    """
+    Normalise la réponse selon le provider.
+    Retourne toujours du texte brut.
+    """
 
+    try:
+        if provider == "openai" or provider == "mistral" or provider == "local-openai":
+            return data["choices"][0]["message"]["content"]
+
+        if provider == "anthropic":
+            return data["content"][0]["text"]
+
+        if provider == "google":
+            return data["candidates"][0]["content"][0]["text"]
+
+        if provider == "ollama":
+            return data["message"]["content"]
+
+        if provider == "kobold" or provider == "oobabooga":
+            return data["choices"][0]["message"]["content"]
+
+    except Exception:
+        return None
+
+    return None
+
+
+# ---------------------------------------------------------
+#  UNIVERSAL LLM CLIENT
+# ---------------------------------------------------------
+def ask_llm(code, provider, model=None, api_key=None, endpoint=None):
+
+    # -----------------------------------------------------
+    # 1) Construire le prompt
+    # -----------------------------------------------------
     prompt = f"""
 Analyze this WordPress plugin file.
 
@@ -48,7 +83,7 @@ Extraction rules (CRITICAL — FOLLOW EXACTLY):
    DO NOT include:
    - CSS classes
    - HTML classes
-   - JS objects (e.g. dtx)
+   - JS objects
    - DOM classes
    - strings
    - variables
@@ -59,16 +94,7 @@ Extraction rules (CRITICAL — FOLLOW EXACTLY):
    - private function x()
    - protected function x()
    - static function x()
-   DO NOT include:
-   - ANY JavaScript functions
-   - ANY jQuery handlers
-   - ANY callbacks
-   - ANY arrow functions
-   - ANY DOM events
-   - ANY HTML attributes
-   - ANY JS object methods (e.g. dtx.init, dtx.get, dtx.set, dtx.guid, dtx.obfuscate)
-   - ANY generic names like current_url, get, set, guid, referrer, obfuscate, replaceAll, updateOption, validKey
-   - ANY strings
+   DO NOT include ANY JavaScript functions, jQuery handlers, callbacks, arrow functions, DOM events, HTML attributes, JS object methods, generic names, or strings.
 
 3) "hk": ALL WordPress hooks used in:
    - add_action("hook_name", ...)
@@ -79,37 +105,13 @@ Extraction rules (CRITICAL — FOLLOW EXACTLY):
    - do_action("hook_name", ...)
    - add_shortcode("shortcode_name", ...)
    Extract ONLY the hook/shortcode name.
-   DO NOT include:
-   - comments
-   - sentences
-   - UI labels
-   - JS strings
-   - HTML
-   - DOM events like change, click, keyup, input
-   - ANY pattern with "*" (e.g. wpcf7_validate_dynamic_*)
 
 4) "ax": ALL AJAX endpoints:
    - wp_ajax_*
    - wp_ajax_nopriv_*
-   DO NOT include:
-   - jQuery AJAX calls
-   - DOM manipulation
-   - JS code
-   - includes
-   - strings
-   - plain "wpcf7dtx" (this is NOT an AJAX endpoint)
 
 5) IGNORE COMPLETELY:
-   - CSS
-   - HTML
-   - JS DOM manipulation
-   - jQuery selectors ($(...))
-   - JS code blocks
-   - comments
-   - UI text
-   - includes / require
-   - full lines of code that are not identifiers
-   - any non‑PHP syntax
+   - CSS, HTML, JS DOM manipulation, jQuery, comments, UI text, includes, non‑PHP syntax.
 
 Return JSON only.
 
@@ -117,39 +119,120 @@ CODE:
 {code}
 """
 
-    payload = {
-        "messages": [
-            {
-                "role": "system",
-                "content": "WordPress plugin static analyzer. Output strict JSON only."
-            },
-            {
-                "role": "user",
-                "content": prompt
-            }
-        ],
-        "temperature": 0.0,
-        "max_tokens": 4096
-    }
+    # -----------------------------------------------------
+    # 2) Construire le payload universel
+    # -----------------------------------------------------
+    messages = [
+        {"role": "system", "content": "WordPress plugin static analyzer. Output strict JSON only."},
+        {"role": "user", "content": prompt}
+    ]
 
-    try:
-        r = requests.post(api_url, json=payload, timeout=1200)
-        r.raise_for_status()
-        data = r.json()
-        raw = data["choices"][0]["message"]["content"]
+    payload = {}
+    headers = {}
 
-    except Exception as e:
-        return {
-            "error": "api_error",
-            "details": str(e)
+    # -----------------------------------------------------
+    # 3) ROUTING CLOUD PROVIDERS
+    # -----------------------------------------------------
+
+    # ---------- OPENAI ----------
+    if provider == "openai":
+        endpoint = "https://api.openai.com/v1/chat/completions"
+        headers = {"Authorization": f"Bearer {api_key}"}
+        payload = {
+            "model": model,
+            "messages": messages,
+            "temperature": 0.0,
+            "max_tokens": 4096
         }
 
+    # ---------- ANTHROPIC ----------
+    elif provider == "anthropic":
+        endpoint = "https://api.anthropic.com/v1/messages"
+        headers = {
+            "x-api-key": api_key,
+            "anthropic-version": "2023-06-01"
+        }
+        payload = {
+            "model": model,
+            "messages": messages,
+            "max_tokens": 4096
+        }
+
+    # ---------- GOOGLE ----------
+    elif provider == "google":
+        endpoint = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
+        payload = {
+            "contents": [{"role": "user", "parts": [{"text": prompt}]}]
+        }
+
+    # ---------- MISTRAL ----------
+    elif provider == "mistral":
+        endpoint = "https://api.mistral.ai/v1/chat/completions"
+        headers = {"Authorization": f"Bearer {api_key}"}
+        payload = {
+            "model": model,
+            "messages": messages
+        }
+
+    # -----------------------------------------------------
+    # 4) ROUTING LOCAL PROVIDERS
+    # -----------------------------------------------------
+    elif provider == "local":
+
+        # Détection automatique du backend selon l’URL
+        url = endpoint.lower()
+
+        # ----- OOBABOOGA -----
+        if "oobabooga" in url or "text-generation-webui" in url:
+            provider = "oobabooga"
+            payload = {"messages": messages}
+
+        # ----- KOBOLDCPP -----
+        elif "kobold" in url:
+            provider = "kobold"
+            payload = {"messages": messages}
+
+        # ----- OLLAMA -----
+        elif "ollama" in url:
+            provider = "ollama"
+            payload = {
+                "model": model,
+                "messages": messages
+            }
+
+        # ----- LM STUDIO / GPT4ALL / OPENAI-LIKE -----
+        else:
+            provider = "local-openai"
+            payload = {
+                "model": model,
+                "messages": messages
+            }
+
+    # -----------------------------------------------------
+    # 5) APPEL API
+    # -----------------------------------------------------
+    try:
+        r = requests.post(endpoint, json=payload, headers=headers, timeout=1200)
+        r.raise_for_status()
+        data = r.json()
+
+    except Exception as e:
+        return {"error": "api_error", "details": str(e)}
+
+    # -----------------------------------------------------
+    # 6) EXTRACTION DU TEXTE
+    # -----------------------------------------------------
+    raw = extract_content(provider, data)
+
+    if not raw:
+        return {"error": "empty_response", "raw": data}
+
+    # -----------------------------------------------------
+    # 7) CLEAN JSON
+    # -----------------------------------------------------
     cleaned = clean_json(raw)
 
     try:
         return json.loads(cleaned)
     except Exception:
-        return {
-            "error": "invalid_json",
-            "raw": raw
-        }
+        return {"error": "invalid_json", "raw": raw}

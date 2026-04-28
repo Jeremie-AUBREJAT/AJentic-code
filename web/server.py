@@ -1,4 +1,4 @@
-from fastapi import FastAPI, UploadFile, File
+from fastapi import FastAPI, UploadFile, File, Form
 from fastapi.responses import HTMLResponse
 import shutil
 import os
@@ -30,7 +30,13 @@ def index():
 
 
 @app.post("/upload")
-async def upload(file: UploadFile = File(...)):
+async def upload(
+    file: UploadFile = File(...),
+    provider: str = Form(...),
+    model: str = Form(None),
+    api_key: str = Form(None),
+    endpoint: str = Form(None)
+):
 
     if not file.filename:
         return {"error": "No file uploaded"}
@@ -38,10 +44,18 @@ async def upload(file: UploadFile = File(...)):
     filepath = os.path.join(UPLOAD_DIR, file.filename)
 
     try:
+        # Sauvegarde du fichier
         with open(filepath, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
 
-        result = run_analysis(filepath)
+        # Appel de l'analyse avec les nouveaux paramètres
+        result = run_analysis(
+            filepath,
+            provider=provider,
+            model=model,
+            api_key=api_key,
+            endpoint=endpoint
+        )
 
         return {
             "status": "success",
