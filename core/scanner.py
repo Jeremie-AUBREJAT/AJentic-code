@@ -12,7 +12,8 @@ EXTENSIONS = [
 IGNORED = [
     "vendor",
     "node_modules",
-    ".git"
+    ".git",
+    "min.js"
 ]
 
 
