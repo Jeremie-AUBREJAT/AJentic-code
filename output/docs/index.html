@@ -1,0 +1,105 @@
+<html><head><meta charset='utf-8'>
+<title>Plugin Documentation</title>
+
+    <style>
+    body { font-family: Arial; background:#111; color:#eee; padding:20px; }
+    h1 { color:#4fc3f7; }
+    h2 { color:#81d4fa; margin-top:30px; }
+    h3 { color:#90caf9; }
+    .box { background:#1e1e1e; padding:15px; margin:10px 0; border-radius:8px; }
+    .file { border-left:3px solid #4fc3f7; padding-left:10px; margin-bottom:20px; }
+    pre { background:#000; padding:10px; overflow:auto; }
+    </style>
+    
+</head><body>
+<h1>WordPress Plugin Documentation</h1>
+<p>Generated: 2026-04-28 14:50:37.191187</p>
+<h2>Architecture Overview</h2>
+<div class='box'>
+<p><b>Functions:</b> 12</p>
+<p><b>Hooks:</b> 6</p>
+<p><b>AJAX endpoints:</b> 0</p>
+</div>
+<h2>Execution Model</h2>
+
+    <div class='box'>
+    <pre>
+1. Plugin init (WordPress hooks)
+2. DOM scan (dtx.init)
+3. Detect dynamic fields
+4. Resolve values (local or AJAX)
+5. Server-side CF7 processing
+6. Return JSON
+7. Update DOM inputs
+    </pre>
+    </div>
+    
+<h2>Files Analysis</h2>
+<div class='box file'>
+<h3>workspace\project\contact-form-7-dynamic-text-extension\contact-form-7-dynamic-text-extension.php</h3>
+<p><b>Summary:</b> </p>
+</div>
+<div class='box file'>
+<h3>workspace\project\contact-form-7-dynamic-text-extension\index.php</h3>
+<p><b>Summary:</b> The provided code contains only a PHP opening tag and a comment.</p>
+</div>
+<div class='box file'>
+<h3>workspace\project\contact-form-7-dynamic-text-extension\assets\scripts\dtx.js</h3>
+<p><b>Summary:</b> </p>
+</div>
+<div class='box file'>
+<h3>workspace\project\contact-form-7-dynamic-text-extension\assets\scripts\tag-generator.js</h3>
+<p><b>Summary:</b> The provided code is a JavaScript snippet for a WordPress plugin that handles UI updates and attribute encoding for a tag generator tool. It includes a custom string replacement helper and an event handler to update hidden input values based on user input.</p>
+</div>
+<div class='box file'>
+<h3>workspace\project\contact-form-7-dynamic-text-extension\includes\admin.php</h3>
+<p><b>Summary:</b> </p>
+</div>
+<div class='box file'>
+<h3>workspace\project\contact-form-7-dynamic-text-extension\includes\shortcodes.php</h3>
+<p><b>Summary:</b> </p>
+</div>
+<div class='box file'>
+<h3>workspace\project\contact-form-7-dynamic-text-extension\includes\utilities.php</h3>
+<p><b>Summary:</b> </p>
+</div>
+<div class='box file'>
+<h3>workspace\project\contact-form-7-dynamic-text-extension\includes\validation.php</h3>
+<p><b>Summary:</b> This plugin extends Contact Form 7 by adding custom validation messages and error codes, specifically focusing on validating dynamic form tags and sensitive data access within mail configurations.</p>
+<h4>Functions</h4><pre>
+wpcf7dtx_messages
+wpcf7dtx_config_validator_available_error_codes
+wpcf7dtx_validation_filter
+wpcf7dtx_validate_value
+wpcf7dtx_validate
+wpcf7dtx_init_validator
+wpcf7dtx_validate_sensitive_value
+</pre>
+<h4>Hooks</h4><pre>
+wpcf7_messages
+wpcf7_config_validator_available_error_codes
+wpcf7_config_validator_validate
+plugins_loaded
+</pre>
+</div>
+<div class='box file'>
+<h3>workspace\project\contact-form-7-dynamic-text-extension\includes\admin\settings.php</h3>
+<p><b>Summary:</b> </p>
+</div>
+<div class='box file'>
+<h3>workspace\project\contact-form-7-dynamic-text-extension\includes\admin\update-check.php</h3>
+<p><b>Summary:</b> A WordPress plugin component that handles version updates and scans for meta/user key access requirements to ensure compatibility with newer versions.</p>
+<h4>Functions</h4><pre>
+wpcf7dtx_update_check
+wpcf7dtx_update
+wpcf7dtx_v4_2_0_access_scan_check
+wpcf7dtx_access_keys_notice
+wpcf7dtx_set_update_access_scan_check_status
+</pre>
+<h4>Hooks</h4><pre>
+admin_init
+plugins_loaded
+admin_notices
+</pre>
+</div>
+</body></html>

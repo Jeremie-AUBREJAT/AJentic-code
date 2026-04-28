@@ -5,17 +5,12 @@ import re
 DEFAULT_API = "http://127.0.0.1:5000/v1/chat/completions"
 
 
-# -------------------------------------------------
-# Extract JSON from LLM output
-# -------------------------------------------------
 def clean_json(text):
     if not text:
         return None
 
-    # remove markdown fences
     text = text.replace("```json", "").replace("```", "").strip()
 
-    # extract first JSON object
     match = re.search(r"\{.*\}", text, re.DOTALL)
     if match:
         return match.group(0)
@@ -23,9 +18,6 @@ def clean_json(text):
     return text
 
 
-# -------------------------------------------------
-# Ask LLM with strong anti‑hallucination prompt
-# -------------------------------------------------
 def ask_llm(code, api_url=DEFAULT_API):
 
     prompt = f"""
@@ -56,7 +48,7 @@ Extraction rules (CRITICAL — FOLLOW EXACTLY):
    DO NOT include:
    - CSS classes
    - HTML classes
-   - JS objects
+   - JS objects (e.g. dtx)
    - DOM classes
    - strings
    - variables
@@ -68,14 +60,15 @@ Extraction rules (CRITICAL — FOLLOW EXACTLY):
    - protected function x()
    - static function x()
    DO NOT include:
-   - JavaScript functions
-   - jQuery handlers
-   - callbacks
-   - arrow functions
-   - DOM events
-   - HTML attributes
-   - strings
-   - JS object methods (e.g. dtx.init)
+   - ANY JavaScript functions
+   - ANY jQuery handlers
+   - ANY callbacks
+   - ANY arrow functions
+   - ANY DOM events
+   - ANY HTML attributes
+   - ANY JS object methods (e.g. dtx.init, dtx.get, dtx.set, dtx.guid, dtx.obfuscate)
+   - ANY generic names like current_url, get, set, guid, referrer, obfuscate, replaceAll, updateOption, validKey
+   - ANY strings
 
 3) "hk": ALL WordPress hooks used in:
    - add_action("hook_name", ...)
@@ -92,6 +85,8 @@ Extraction rules (CRITICAL — FOLLOW EXACTLY):
    - UI labels
    - JS strings
    - HTML
+   - DOM events like change, click, keyup, input
+   - ANY pattern with "*" (e.g. wpcf7_validate_dynamic_*)
 
 4) "ax": ALL AJAX endpoints:
    - wp_ajax_*
@@ -102,6 +97,7 @@ Extraction rules (CRITICAL — FOLLOW EXACTLY):
    - JS code
    - includes
    - strings
+   - plain "wpcf7dtx" (this is NOT an AJAX endpoint)
 
 5) IGNORE COMPLETELY:
    - CSS
@@ -113,6 +109,7 @@ Extraction rules (CRITICAL — FOLLOW EXACTLY):
    - UI text
    - includes / require
    - full lines of code that are not identifiers
+   - any non‑PHP syntax
 
 Return JSON only.
 
