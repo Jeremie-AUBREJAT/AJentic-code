@@ -46,23 +46,73 @@ Return STRICT JSON with this schema:
   }}
 }}
 
-Extraction rules (IMPORTANT):
+Extraction rules (CRITICAL — FOLLOW EXACTLY):
 
-- "cls": ONLY PHP classes defined with "class X" (no CSS classes, no HTML classes, no JS objects)
-- "fn": ONLY PHP functions or methods (no JS functions, no jQuery handlers, no callbacks)
-- "hk": ONLY WordPress hooks used in add_action() or add_filter()
-- "ax": ONLY AJAX endpoints registered via wp_ajax_* or wp_ajax_nopriv_*
+1) "cls": ONLY PHP classes defined with:
+   - class X
+   - class X extends Y
+   - abstract class X
+   - final class X
+   DO NOT include:
+   - CSS classes
+   - HTML classes
+   - JS objects
+   - DOM classes
+   - strings
+   - variables
 
-IGNORE COMPLETELY:
-- CSS classes (e.g. .button-secondary)
-- HTML attributes (class="", id="")
-- jQuery selectors ($(...))
-- DOM manipulation
-- JS code blocks
-- comments
-- UI text
-- includes / require
-- full lines of code that are not identifiers
+2) "fn": ONLY PHP functions or methods:
+   - function x()
+   - public function x()
+   - private function x()
+   - protected function x()
+   - static function x()
+   DO NOT include:
+   - JavaScript functions
+   - jQuery handlers
+   - callbacks
+   - arrow functions
+   - DOM events
+   - HTML attributes
+   - strings
+   - JS object methods (e.g. dtx.init)
+
+3) "hk": ALL WordPress hooks used in:
+   - add_action("hook_name", ...)
+   - add_filter("hook_name", ...)
+   - remove_action(...)
+   - remove_filter(...)
+   - apply_filters("hook_name", ...)
+   - do_action("hook_name", ...)
+   - add_shortcode("shortcode_name", ...)
+   Extract ONLY the hook/shortcode name.
+   DO NOT include:
+   - comments
+   - sentences
+   - UI labels
+   - JS strings
+   - HTML
+
+4) "ax": ALL AJAX endpoints:
+   - wp_ajax_*
+   - wp_ajax_nopriv_*
+   DO NOT include:
+   - jQuery AJAX calls
+   - DOM manipulation
+   - JS code
+   - includes
+   - strings
+
+5) IGNORE COMPLETELY:
+   - CSS
+   - HTML
+   - JS DOM manipulation
+   - jQuery selectors ($(...))
+   - JS code blocks
+   - comments
+   - UI text
+   - includes / require
+   - full lines of code that are not identifiers
 
 Return JSON only.
 
