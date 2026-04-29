@@ -97,6 +97,35 @@ label{
     font-size:14px;
     color:#dcdcdc;
 }
+
+/* Progress bar */
+#progress-container{
+    display:none;
+    margin-top:25px;
+    text-align:left;
+}
+
+#progress-text{
+    margin-bottom:8px;
+    font-size:14px;
+    font-weight:bold;
+}
+
+#progress-bar-bg{
+    width:100%;
+    height:20px;
+    background:#333;
+    border-radius:10px;
+}
+
+#progress-bar{
+    width:0%;
+    height:100%;
+    background:#4caf50;
+    border-radius:10px;
+    transition:width 0.3s;
+}
+
 </style>
 </head>
 
@@ -137,6 +166,14 @@ label{
 
 </form>
 
+<!-- PROGRESS BAR -->
+<div id="progress-container">
+    <div id="progress-text">Analyse en cours...</div>
+    <div id="progress-bar-bg">
+        <div id="progress-bar"></div>
+    </div>
+</div>
+
 </div>
 
 <pre id="result"></pre>
@@ -148,30 +185,43 @@ const apiBox = document.getElementById("api_key_box")
 const endpointBox = document.getElementById("endpoint_box")
 
 function updateUI(){
-
     if(provider.value === "local"){
-
         apiBox.classList.add("hidden")
         endpointBox.classList.remove("hidden")
-
     }else{
-
         apiBox.classList.remove("hidden")
         endpointBox.classList.add("hidden")
-
     }
-
 }
 
 provider.addEventListener("change",updateUI)
-
 updateUI()
+
+// PROGRESS BAR ELEMENTS
+const progressContainer = document.getElementById("progress-container")
+const progressBar = document.getElementById("progress-bar")
+const progressText = document.getElementById("progress-text")
 
 document.getElementById("uploadForm").onsubmit = async function(e){
 
     e.preventDefault()
 
     let formData = new FormData(this)
+
+    // Reset progress bar
+    progressContainer.style.display = "block"
+    progressBar.style.width = "0%"
+    progressText.innerText = "Préparation..."
+
+    // Fake progress animation
+    let progress = 0
+    let interval = setInterval(() => {
+        if(progress < 90){
+            progress += 1
+            progressBar.style.width = progress + "%"
+            progressText.innerText = "Analyse en cours... " + progress + "%"
+        }
+    }, 300)
 
     let response = await fetch("/upload",{
         method:"POST",
@@ -180,10 +230,41 @@ document.getElementById("uploadForm").onsubmit = async function(e){
 
     let data = await response.json()
 
+    clearInterval(interval)
+    progressBar.style.width = "100%"
+    progressText.innerText = "Analyse terminée !"
+
     document.getElementById("result").textContent =
         JSON.stringify(data,null,2)
-
 }
+
+
+// Charger les valeurs sauvegardées
+window.addEventListener("load", () => {
+    if(localStorage.provider) provider.value = localStorage.provider
+    if(localStorage.model) document.querySelector("input[name='model']").value = localStorage.model
+    if(localStorage.api_key) document.querySelector("input[name='api_key']").value = localStorage.api_key
+    if(localStorage.endpoint) document.querySelector("input[name='endpoint']").value = localStorage.endpoint
+
+    updateUI()
+})
+
+// Sauvegarder automatiquement à chaque changement
+provider.addEventListener("change", () => {
+    localStorage.provider = provider.value
+})
+
+document.querySelector("input[name='model']").addEventListener("input", e => {
+    localStorage.model = e.target.value
+})
+
+document.querySelector("input[name='api_key']").addEventListener("input", e => {
+    localStorage.api_key = e.target.value
+})
+
+document.querySelector("input[name='endpoint']").addEventListener("input", e => {
+    localStorage.endpoint = e.target.value
+})
 
 </script>
 

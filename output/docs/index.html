@@ -13,12 +13,12 @@
     
 </head><body>
 <h1>WordPress Plugin Documentation</h1>
-<p>Generated: 2026-04-28 14:50:37.191187</p>
+<p>Generated: 2026-04-29 08:00:32.229363</p>
 <h2>Architecture Overview</h2>
 <div class='box'>
-<p><b>Functions:</b> 12</p>
-<p><b>Hooks:</b> 6</p>
-<p><b>AJAX endpoints:</b> 0</p>
+<p><b>Functions:</b> 98</p>
+<p><b>Hooks:</b> 53</p>
+<p><b>AJAX endpoints:</b> 3</p>
 </div>
 <h2>Execution Model</h2>
 
@@ -37,42 +37,189 @@
 <h2>Files Analysis</h2>
 <div class='box file'>
 <h3>workspace\project\contact-form-7-dynamic-text-extension\contact-form-7-dynamic-text-extension.php</h3>
-<p><b>Summary:</b> </p>
+<p><b>Summary:</b> This plugin extends Contact Form 7 by adding dynamic fields (text, email, URL, phone, number, range, textarea, select, checkbox, radio, date) and custom shortcodes to allow dynamic data insertion into CF7 forms. It includes dependency checks, configuration for dynamic field types, built-in shortcodes for fetching variables (GET, POST, URL, user, taxonomy, etc.), and a frontend JavaScript file to handle AJAX requests for dynamic value evaluation.</p>
+<h4>Functions</h4><pre>
+wpcf7dtx_dependencies
+wpcf7dtx_init
+wpcf7dtx_hidden_field
+wpcf7dtx_enqueue_frontend_assets
+wpcf7dtx_shortcode_handler
+wpcf7dtx_js_handler
+</pre>
+<h4>Hooks</h4><pre>
+admin_notices
+wpcf7_form_hidden_fields
+wpcf7_init
+wpcf7_validate_...
+wp_enqueue_scripts
+wp_ajax_wpcf7dtx
+wp_ajax_nopriv_wpcf7dtx
+</pre>
+<h4>AJAX</h4><pre>
+wp_ajax_wpcf7dtx
+wp_ajax_nopriv_wpcf7dtx
+</pre>
 </div>
 <div class='box file'>
 <h3>workspace\project\contact-form-7-dynamic-text-extension\index.php</h3>
-<p><b>Summary:</b> The provided code contains only a PHP opening tag and a comment.</p>
+<p><b>Summary:</b> The provided file is extremely minimal, containing only the opening PHP tag and a comment.</p>
 </div>
 <div class='box file'>
 <h3>workspace\project\contact-form-7-dynamic-text-extension\assets\scripts\dtx.js</h3>
-<p><b>Summary:</b> </p>
+<p><b>Summary:</b> This JavaScript file implements a dynamic text extension (DTX) client-side functionality, primarily for Contact Form 7 shortcodes. It manages the queuing of dynamic data requests, performs URL parsing, cookie retrieval, and GUID generation. It uses AJAX to fetch dynamic values asynchronously from the server when necessary.</p>
+<h4>Functions</h4><pre>
+init
+validKey
+obfuscate
+set
+get
+referrer
+current_url
+get_cookie
+guid
+</pre>
+<h4>Hooks</h4><pre>
+add_action
+add_filter
+remove_action
+remove_filter
+do_action
+add_shortcode
+</pre>
+<h4>AJAX</h4><pre>
+wpcf7dtx
+</pre>
 </div>
 <div class='box file'>
 <h3>workspace\project\contact-form-7-dynamic-text-extension\assets\scripts\tag-generator.js</h3>
-<p><b>Summary:</b> The provided code is a JavaScript snippet for a WordPress plugin that handles UI updates and attribute encoding for a tag generator tool. It includes a custom string replacement helper and an event handler to update hidden input values based on user input.</p>
+<p><b>Summary:</b> This script initializes a tag generator system using jQuery. It adds specific CSS classes to buttons and option elements, and defines helper functions to perform string replacement and encode user input before updating the hidden form fields.</p>
+<h4>Functions</h4><pre>
+replaceAll
+updateOption
+</pre>
+<h4>Hooks</h4><pre>
+dtx-form-tag
+</pre>
 </div>
 <div class='box file'>
 <h3>workspace\project\contact-form-7-dynamic-text-extension\includes\admin.php</h3>
-<p><b>Summary:</b> </p>
+<p><b>Summary:</b> This plugin provides a Tag Generator for Contact Form 7 (CF7) to dynamically generate form tags. It allows users to create custom form tags based on field configurations, supporting various input types (text, select, checkbox, radio, textarea, number, date) and providing extensive documentation links for dynamic attributes and shortcode options.</p>
+<h4>Functions</h4><pre>
+instance()
+__construct()
+dependency()
+load_assets($hook)
+init()
+default_input_atts($default, $atts, $classes)
+allowed_tags($type)
+get_legend_id($name)
+input($name, $atts)
+field($name, $label, $form_controls, $note = false, $field_note = '')
+text($name, $label, $input_atts = array(), $note = false, $field_note = '')
+checkbox($name, $label, $checkbox_label = '', $input_atts = array(), $note = false, $field_note = '')
+doc_link($path)
+render($contact_form, $options)
+</pre>
+<h4>Hooks</h4><pre>
+add_action("admin_enqueue_scripts", ...)
+add_action("wpcf7_admin_init", ...)
+</pre>
 </div>
 <div class='box file'>
 <h3>workspace\project\contact-form-7-dynamic-text-extension\includes\shortcodes.php</h3>
-<p><b>Summary:</b> </p>
+<p><b>Summary:</b> This plugin provides a comprehensive set of shortcodes (prefixed with 'CF7_') to easily retrieve dynamic data from the WordPress environment. These shortcodes allow developers to fetch various pieces of information, including GET/POST variables, the current URL, referrer URL, blog information, post variables (title, ID, custom fields), current user data, attachment details, cookie values, taxonomy terms, theme option values, and generate a unique GUID. The system utilizes extensive filtering for sanitization and escaping of the returned data.</p>
+<h4>Functions</h4><pre>
+wpcf7dtx_init_shortcodes
+wpcf7dtx_get
+wpcf7dtx_post
+wpcf7dtx_url
+wpcf7dtx_referrer
+wpcf7dtx_bloginfo
+wpcf7dtx_get_post_var
+wpcf7dtx_get_custom_field
+wpcf7dtx_get_current_var
+wpcf7dtx_get_current_user
+wpcf7dtx_get_attachment
+wpcf7dtx_get_cookie
+wpcf7dtx_get_taxonomy
+wpcf7dtx_get_theme_option
+wpcf7dtx_guid
+</pre>
+<h4>Hooks</h4><pre>
+CF7_GET
+CF7_POST
+CF7_URL
+CF7_referrer
+CF7_bloginfo
+CF7_get_post_var
+CF7_get_custom_field
+CF7_get_current_var
+CF7_get_current_user
+CF7_get_attachment
+CF7_get_cookie
+CF7_get_taxonomy
+CF7_get_theme_option
+CF7_guid
+init
+</pre>
 </div>
 <div class='box file'>
 <h3>workspace\project\contact-form-7-dynamic-text-extension\includes\utilities.php</h3>
-<p><b>Summary:</b> </p>
+<p><b>Summary:</b> This plugin provides a comprehensive dynamic text extension (DTX) for Contact Form 7 (CF7), offering custom filtering, sanitization, and escaping for form field values. It includes features for protocol validation, dynamic value detection (email, URL, text), attribute handling, and granular control over post meta and user data access permissions using an allow-list system, complete with an admin alert for denied access.</p>
+<h4>Functions</h4><pre>
+wpcf7dtx_allow_protocols
+wpcf7dtx_sanitize
+wpcf7dtx_escape
+wpcf7dtx_detect_value_type
+wpcf7dtx_obfuscate
+wpcf7dtx_validate_post_id
+wpcf7dtx_user_can_view_post
+wpcf7dtx_get_post_id
+wpcf7dtx_get_dynamic
+wpcf7dtx_get_dynamic_attr
+wpcf7dtx_dynamic_attr
+wpcf7dtx_get_allowed_field_properties
+wpcf7dtx_format_atts
+wpcf7dtx_input_html
+wpcf7dtx_checkbox_html
+wpcf7dtx_checkbox_group_html
+wpcf7dtx_textarea_html
+wpcf7dtx_options_html
+wpcf7dtx_select_html
+wpcf7dtx_array_has_key
+wpcf7dtx_post_meta_key_access_is_allowed
+wpcf7dtx_user_data_access_is_allowed
+wpcf7dtx_parse_allowed_keys
+wpcf7dtx_split_newlines
+wpcf7dtx_get_settings
+wpcf7dtx_update_settings
+wpcf7dtx_access_denied_alert
+</pre>
+<h4>Hooks</h4><pre>
+wpcf7dtx_allow_protocols
+wpcf7dtx_sanitize
+wpcf7dtx_escape
+wpcf7dtx_obfuscate
+wpcf7dtx_get_dynamic
+wpcf7dtx_get_dynamic_attr
+wpcf7dtx_format_atts
+wpcf7dtx_input_html
+wpcf7dtx_checkbox_html
+wpcf7dtx_checkbox_group_html
+wpcf7dtx_textarea_html
+wpcf7dtx_options_html
+wpcf7dtx_select_html
+</pre>
 </div>
 <div class='box file'>
 <h3>workspace\project\contact-form-7-dynamic-text-extension\includes\validation.php</h3>
-<p><b>Summary:</b> This plugin extends Contact Form 7 by adding custom validation messages and error codes, specifically focusing on validating dynamic form tags and sensitive data access within mail configurations.</p>
+<p><b>Summary:</b> This plugin extends Contact Form 7 (CF7) to add advanced frontend and backend validation checks for dynamic text fields (DTX). It customizes error messages for invalid email, phone, number, and date formats. It also validates the configuration of dynamic fields, ensures email addresses adhere to site domains, and checks sensitive data access permissions defined in the CF7 settings before mail configuration is validated.</p>
 <h4>Functions</h4><pre>
 wpcf7dtx_messages
 wpcf7dtx_config_validator_available_error_codes
 wpcf7dtx_validation_filter
 wpcf7dtx_validate_value
 wpcf7dtx_validate
-wpcf7dtx_init_validator
 wpcf7dtx_validate_sensitive_value
 </pre>
 <h4>Hooks</h4><pre>
@@ -84,11 +231,34 @@ plugins_loaded
 </div>
 <div class='box file'>
 <h3>workspace\project\contact-form-7-dynamic-text-extension\includes\admin\settings.php</h3>
-<p><b>Summary:</b> </p>
+<p><b>Summary:</b> This plugin provides settings management for a Contact Form 7 Dynamic Text Extension, allowing administrators to configure access control lists for post metadata keys and user data keys. It offers functionality to scan existing CF7 forms to identify which shortcodes use these keys and to allow users to explicitly add detected keys to the allow lists.</p>
+<h4>Functions</h4><pre>
+__construct
+fields
+settings_init
+options_page
+render_options_page
+render_field
+render_section
+render_scan_results
+handle_save_allows
+render_allow_keys_submission
+render_back_to_settings_button
+wpcf7dtx_get_admin_scan_screen_url
+wpcf7dtx_get_admin_settings_screen_url
+wpcf7dtx_scan_forms_for_access_keys
+</pre>
+<h4>Hooks</h4><pre>
+admin_init
+admin_menu
+add_settings_section
+add_settings_field
+add_submenu_page
+</pre>
 </div>
 <div class='box file'>
 <h3>workspace\project\contact-form-7-dynamic-text-extension\includes\admin\update-check.php</h3>
-<p><b>Summary:</b> A WordPress plugin component that handles version updates and scans for meta/user key access requirements to ensure compatibility with newer versions.</p>
+<p><b>Summary:</b> A plugin designed for a Contact Form 7 Dynamic Text extension (DTX) that checks for plugin version updates, scans form meta and user keys for necessary allow-listing permissions, and displays admin notices when intervention is required.</p>
 <h4>Functions</h4><pre>
 wpcf7dtx_update_check
 wpcf7dtx_update
@@ -97,8 +267,8 @@ wpcf7dtx_access_keys_notice
 wpcf7dtx_set_update_access_scan_check_status
 </pre>
 <h4>Hooks</h4><pre>
-admin_init
 plugins_loaded
+admin_init
 admin_notices
 </pre>
 </div>
