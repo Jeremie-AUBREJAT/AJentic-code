@@ -1,0 +1,84 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Audit Web – Rapport</title>
+
+<style>
+body{
+    font-family: Arial, sans-serif;
+    background:#111;
+    color:#eee;
+    margin:0;
+    padding:0;
+}
+h1,h2,h3{
+    color:#4fc3f7;
+}
+.container{
+    width:90%;
+    max-width:1100px;
+    margin:auto;
+    padding:20px;
+}
+.section{
+    background:#1c1c1c;
+    padding:20px;
+    margin-top:20px;
+    border-radius:10px;
+    border:1px solid #333;
+}
+.finding{
+    background:#2a2a2a;
+    padding:10px;
+    margin:5px 0;
+    border-left:4px solid #ff5252;
+}
+.file-block{
+    background:#1e1e1e;
+    padding:15px;
+    margin-top:15px;
+    border-radius:8px;
+    border:1px solid #333;
+}
+pre{
+    white-space:pre-wrap;
+    background:#000;
+    padding:10px;
+    border-radius:8px;
+    border:1px solid #333;
+    color:#9ccc65;
+}
+a{
+    color:#4fc3f7;
+}
+</style>
+</head>
+
+<body>
+<div class="container">
+
+<h1>Audit Web – Rapport Complet</h1>
+<p>Analyse automatique des fichiers récupérés lors du crawl.</p>
+
+<div class="section">
+<h2>Résumé global</h2>
+<p><b>Nombre total de fichiers analysés :</b> 1</p>
+<p><b>Nombre total de failles détectées :</b> 1</p>
+<h3>Types de failles détectées :</h3><div class='finding'>endpoint</div></div>
+<div class="section">
+<h2>Détails par fichier</h2>
+
+<div class="file-block">
+<h3>workspace\web_audit\0ae6000903cd34068104eef100a0002b.web-security-academy.net\page_0.html</h3>
+<p><b>Failles détectées :</b> 1</p>
+<div class='finding'>endpoint</div>
+<h4>Analyse complète :</h4>
+<pre>{&#x27;llm&#x27;: {&#x27;lang&#x27;: &#x27;html&#x27;, &#x27;cls&#x27;: [], &#x27;fn&#x27;: [], &#x27;hk&#x27;: [], &#x27;ax&#x27;: []}, &#x27;doc&#x27;: {&#x27;summary&#x27;: &#x27;The analyzed content is a basic HTML error page structure, not a functional WordPress plugin file. Consequently, no PHP classes, functions, WordPress hooks, or AJAX endpoints were found.&#x27;}}</pre>
+</div>
+
+</div>
+</div>
+</body>
+</html>

@@ -13,6 +13,7 @@ from core.extractor import extract_input
 from core.scanner import scan_codebase
 from core.llm_client import ask_llm
 from core.doc_generator import generate_html_doc
+from core.doc_generator_audit import generate_html_doc_web   # ← AJOUT
 
 WORKSPACE = os.getenv("ANALYZER_WORKSPACE", "workspace")
 BASE_OUTPUT_DIR = os.getenv("ANALYZER_OUTPUT_DIR", "output")
@@ -39,7 +40,7 @@ def _mask(s):
 
 
 # ---------------------------------------------------------
-# NORMALISATION DU JSON LLM
+# NORMALISATION DU JSON LLM (AGENT PRINCIPAL UNIQUEMENT)
 # ---------------------------------------------------------
 def _normalize(resp):
     if not isinstance(resp, dict):
@@ -62,7 +63,7 @@ def _normalize(resp):
 
 
 # ---------------------------------------------------------
-# ANALYSE D’UN FICHIER (MODE NORMAL)
+# ANALYSE D’UN FICHIER (AGENT PRINCIPAL)
 # ---------------------------------------------------------
 def analyze_file(path: Path, provider=None, model=None, api_key=None, endpoint=None, agent_instance=None):
 
@@ -77,13 +78,13 @@ def analyze_file(path: Path, provider=None, model=None, api_key=None, endpoint=N
     code = _mask(code)
 
     prompt = agent_instance.build_prompt(code)
-
     resp = ask_llm(prompt, provider, model, api_key, endpoint)
+
     return _normalize(resp)
 
 
 # ---------------------------------------------------------
-# POST-PROCESSING GLOBAL
+# AGRÉGATION GLOBALE (AGENT PRINCIPAL)
 # ---------------------------------------------------------
 def _postprocess_llm_aggregates(g):
 
@@ -146,15 +147,11 @@ def _postprocess_llm_aggregates(g):
     g["ax"] = cleaned_ax
 
     g["flow"] = [a for a in g["flow"] if a in g["ax"]]
-
     g["sink"] = list(set(g["sink"]))
 
     return g
 
 
-# ---------------------------------------------------------
-# AGRÉGATION GLOBALE
-# ---------------------------------------------------------
 def build_global_llm(results):
     g = {"cls": set(), "fn": set(), "hk": set(), "ax": set(), "flow": [], "sink": []}
 
@@ -190,7 +187,7 @@ def build_global_llm(results):
 
 
 # ---------------------------------------------------------
-# MINIMISATION POUR LLM
+# MINIMISATION POUR LLM (AGENT PRINCIPAL)
 # ---------------------------------------------------------
 def minimize_for_llm(final):
     llm = final["llm"]
@@ -227,7 +224,7 @@ def create_zip(output_dir):
 
 
 # ---------------------------------------------------------
-# SAUVEGARDE
+# SAUVEGARDE (AGENT PRINCIPAL)
 # ---------------------------------------------------------
 def save_output(data, output_dir):
     out = Path(output_dir)
@@ -255,7 +252,7 @@ def run_analysis(input_path, provider, model=None, api_key=None, endpoint=None, 
     agent_instance = agent_module.Agent()
 
     # ---------------------------------------------------------
-    # MODE WEB AUDIT (analyse fichier par fichier)
+    # MODE WEB AUDIT (pipeline séparé)
     # ---------------------------------------------------------
     if agent == "web_audit":
 
@@ -276,29 +273,23 @@ def run_analysis(input_path, provider, model=None, api_key=None, endpoint=None, 
             prompt = agent_instance.build_prompt(code)
             resp = ask_llm(prompt, provider, model, api_key, endpoint)
 
+            analysis_text = resp if isinstance(resp, str) else str(resp)
+
             results.append({
                 "file": str(f),
-                "analysis": _normalize(resp)
+                "analysis": analysis_text
             })
 
             if progress_state is not None:
                 progress_state["current"] += 1
 
-        final = {
-            "type": "web_audit",
-            "files": len(results),
-            "files_list": [str(r["file"]) for r in results],
-            "llm": build_global_llm(results),
-            "results": results,
-        }
-
         output_dir = os.path.join(BASE_OUTPUT_DIR, "web-audit")
-        save_output(final, output_dir)
-        generate_html_doc(final, output_dir)
+        Path(output_dir).mkdir(parents=True, exist_ok=True)
+
+        generate_html_doc_web(results, output_dir)
 
         zip_path = create_zip(output_dir)
 
-        # CLEANUP : supprimer les fichiers crawlés
         shutil.rmtree(base_dir)
 
         return zip_path
