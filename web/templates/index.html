@@ -2,27 +2,35 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>AJ-entics-Tools</title>
+<title>AJ-entics Tools</title>
 
 <style>
-/* --- TON CSS INCHANGÉ --- */
 body{
     font-family: "Inter", Arial, sans-serif;
     background: linear-gradient(135deg, #0d0d0d, #1a1a1a);
     color:white;
     text-align:center;
-    padding-top:0px;
     margin:0;
+    padding:0;
 }
+
 .upload-box{
     width:420px;
     margin:auto;
+    margin-top:40px;
     padding:40px;
     border-radius:18px;
     background:rgba(255,255,255,0.06);
     backdrop-filter:blur(12px);
     border:1px solid rgba(255,255,255,0.12);
-    box-shadow:0 10px 40px rgba(0,0,0,0.4);
+}
+label{
+    display:block;
+    margin-top:18px;
+    margin-bottom:6px;
+    text-align:left;
+    font-size:14px;
+    color:#dcdcdc;
 }
 input,select{
     width:100%;
@@ -34,6 +42,14 @@ input,select{
     color:white;
 }
 option{ color:black; }
+label{
+    display:block;
+    margin-top:18px;
+    margin-bottom:6px;
+    text-align:left;
+    font-size:14px;
+    color:#dcdcdc;
+}
 button{
     margin-top:25px;
     padding:12px 25px;
@@ -43,14 +59,6 @@ button{
     cursor:pointer;
     background:linear-gradient(135deg,#0078ff,#005fcc);
     color:white;
-}
-label{
-    display:block;
-    margin-top:18px;
-    margin-bottom:6px;
-    text-align:left;
-    font-size:14px;
-    color:#dcdcdc;
 }
 #result{
     margin-top:40px;
@@ -64,38 +72,13 @@ label{
     border:1px solid rgba(255,255,255,0.1);
     text-align:left;
     white-space:pre-wrap;
-    font-size:15px;
-}
-.hidden{ display:none; }
-#progress-container{
-    display:none;
-    margin-top:25px;
-    text-align:left;
-}
-#progress-text{
-    margin-bottom:8px;
-    font-size:14px;
-    font-weight:bold;
-}
-#progress-bar-bg{
-    width:100%;
-    height:20px;
-    background:#333;
-    border-radius:10px;
-}
-#progress-bar{
-    width:0%;
-    height:100%;
-    background:#4caf50;
-    border-radius:10px;
-    transition:width 0.3s;
 }
 </style>
 </head>
 
 <body>
 
-<h1>AJ-entic – Analyse plugin Wordpress</h1>
+<h1>AJ-entic – Analyze WordPress plugin</h1>
 
 <div class="upload-box">
 
@@ -109,9 +92,9 @@ label{
 <option value="mistral">Mistral</option>
 <option value="local">Local (LM Studio / Oobabooga / Kobold)</option>
 </select>
-
+<!-- 
 <label>Model</label>
-<input type="text" name="model" placeholder="ex: gpt-4o, gemma-4-26b-a4b-it, claude-3-sonnet">
+<input type="text" name="model" placeholder="ex: gpt-4o, gemma-4-26b-a4b-it, claude-3-sonnet"> -->
 
 <div id="api_key_box">
 <label>API Key</label>
@@ -123,27 +106,29 @@ label{
 <input type="text" name="endpoint" placeholder="http://127.0.0.1:5000/v1/chat/completions">
 </div>
 
-<label>Plugin WordPress (zip) ou dossier</label>
+<label>WordPress Plugin (zip or folder)</label>
 <input type="file" name="file" required>
 
-<button type="submit">Analyser</button>
+<button type="submit">Analyzer</button>
 
 </form>
 
-<!-- PROGRESS BAR -->
 <div id="progress-container">
-    <div id="progress-text">Analyse en cours...</div>
+    <div id="progress-text">Progress...</div>
     <div id="progress-bar-bg">
         <div id="progress-bar"></div>
     </div>
 </div>
 
+<button id="downloadBtn" class="hidden">Download results</button>
+
 </div>
 
-<pre id="result"></pre>
+
+<!-- <pre id="result"></pre> -->
 
 <script>
-console.log("JS LOADED"); // DEBUG
+console.log("UI loaded")
 
 const provider = document.getElementById("provider")
 const apiBox = document.getElementById("api_key_box")
@@ -153,43 +138,44 @@ function updateUI(){
     if(provider.value === "local"){
         apiBox.classList.add("hidden")
         endpointBox.classList.remove("hidden")
-    }else{
+    } else {
         apiBox.classList.remove("hidden")
         endpointBox.classList.add("hidden")
     }
 }
-provider.addEventListener("change",updateUI)
+provider.addEventListener("change", updateUI)
 updateUI()
 
 const progressContainer = document.getElementById("progress-container")
 const progressBar = document.getElementById("progress-bar")
 const progressText = document.getElementById("progress-text")
 const resultBox = document.getElementById("result")
+const downloadBtn = document.getElementById("downloadBtn")
 
 document.getElementById("uploadForm").onsubmit = async function(e){
     e.preventDefault()
 
     let formData = new FormData(this)
 
-    // Reset UI
     progressContainer.style.display = "block"
     progressBar.style.width = "0%"
     progressText.innerText = "Préparation..."
     resultBox.textContent = ""
+    downloadBtn.classList.add("hidden")
 
-    // 1) Lancer l'analyse (réponse immédiate)
+    // 1) Lancer l'analyse
     const resp = await fetch("/upload", {
         method: "POST",
         body: formData
     })
     const data = await resp.json()
 
-    if (data.status !== "started") {
+    if(data.status !== "started"){
         resultBox.textContent = "Erreur: " + JSON.stringify(data, null, 2)
         return
     }
 
-    // 2) Ouvrir le SSE APRÈS le lancement
+    // 2) Ouvrir le SSE
     const evt = new EventSource("/progress")
 
     evt.onmessage = (e) => {
@@ -201,48 +187,30 @@ document.getElementById("uploadForm").onsubmit = async function(e){
         progressBar.style.width = percent + "%"
         progressText.innerText = `Analyse : ${p.current} / ${p.total} fichiers (${percent}%)`
 
-        // 3) Quand c'est fini
-        if (p.current >= p.total && p.total > 0) {
+        // Analyse terminée
+        if (p.current >= p.total && p.total > 0 && p.zip_path){
             evt.close()
-            progressText.innerText = "Analyse terminée. Chargement du résultat..."
+            progressText.innerText = "Analyse terminée."
 
+            // Afficher bouton téléchargement
+            downloadBtn.classList.remove("hidden")
+            downloadBtn.onclick = () => {
+                window.location.href = "/download?zip_path=" + encodeURIComponent(p.zip_path)
+            }
+
+            // Charger le JSON
             fetch("/output/result.json")
                 .then(r => r.json())
                 .then(j => {
                     resultBox.textContent = JSON.stringify(j, null, 2)
-                    progressText.innerText = "Analyse terminée."
-                })
-                .catch(err => {
-                    resultBox.textContent = "Erreur chargement résultat: " + err
                 })
         }
     }
 
     evt.onerror = (e) => {
-        console.error("[SSE] Erreur /progress:", e)
+        console.error("SSE error:", e)
     }
 }
-
-// LocalStorage
-window.addEventListener("load", () => {
-    if(localStorage.provider) provider.value = localStorage.provider
-    if(localStorage.model) document.querySelector("input[name='model']").value = localStorage.model
-    if(localStorage.api_key) document.querySelector("input[name='api_key']").value = localStorage.api_key
-    if(localStorage.endpoint) document.querySelector("input[name='endpoint']").value = localStorage.endpoint
-    updateUI()
-})
-provider.addEventListener("change", () => {
-    localStorage.provider = provider.value
-})
-document.querySelector("input[name='model']").addEventListener("input", e => {
-    localStorage.model = e.target.value
-})
-document.querySelector("input[name='api_key']").addEventListener("input", e => {
-    localStorage.api_key = e.target.value
-})
-document.querySelector("input[name='endpoint']").addEventListener("input", e => {
-    localStorage.endpoint = e.target.value
-})
 </script>
 
 </body>
