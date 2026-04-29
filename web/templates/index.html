@@ -34,14 +34,6 @@ input,select{
     color:white;
 }
 option{ color:black; }
-label{
-    display:block;
-    margin-top:18px;
-    margin-bottom:6px;
-    text-align:left;
-    font-size:14px;
-    color:#dcdcdc;
-}
 button{
     margin-top:25px;
     padding:12px 25px;
@@ -103,15 +95,15 @@ button{
 
 <label>Provider</label>
 <select name="provider" id="provider">
-<!-- <option value="openai">OpenAI</option>
+<option value="openai">OpenAI</option>
 <option value="anthropic">Claude</option>
 <option value="google">Google</option>
-<option value="mistral">Mistral</option> -->
+<option value="mistral">Mistral</option>
 <option value="local">Local (LM Studio / Oobabooga / Kobold)</option>
 </select>
-<!-- 
+
 <label>Model</label>
-<input type="text" name="model" placeholder="ex: gpt-4o, gemma-4-26b-a4b-it, claude-3-sonnet"> -->
+<input type="text" name="model" placeholder="ex: gpt-4o, gemma-4-26b-a4b-it, claude-3-sonnet">
 
 <div id="api_key_box">
 <label>API Key</label>
@@ -140,8 +132,7 @@ button{
 
 </div>
 
-
-<!-- <pre id="result"></pre> -->
+<pre id="result"></pre>
 
 <script>
 console.log("JS LOADED"); // DEBUG
