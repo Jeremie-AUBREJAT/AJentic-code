@@ -1,5 +1,5 @@
 from fastapi import FastAPI, UploadFile, File, Form
-from fastapi.responses import HTMLResponse, StreamingResponse
+from fastapi.responses import HTMLResponse, StreamingResponse, FileResponse
 import shutil
 import os
 import webbrowser
@@ -15,7 +15,7 @@ UPLOAD_DIR = "workspace/upload"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 # État global de progression
-progress_state = {"current": 0, "total": 1}
+progress_state = {"current": 0, "total": 1, "zip_path": ""}
 
 
 # ---------------------------------------------------------
@@ -43,8 +43,8 @@ def index():
 # THREAD D'ANALYSE
 # ---------------------------------------------------------
 def background_analysis(filepath, provider, model, api_key, endpoint):
-    # run_analysis mettra à jour progress_state
-    run_analysis(
+    # run_analysis retourne maintenant le chemin du ZIP
+    zip_path = run_analysis(
         filepath,
         provider=provider,
         model=model,
@@ -52,6 +52,9 @@ def background_analysis(filepath, provider, model, api_key, endpoint):
         endpoint=endpoint,
         progress_state=progress_state
     )
+
+    # On stocke le chemin du ZIP dans l'état global
+    progress_state["zip_path"] = zip_path
 
 
 # ---------------------------------------------------------
@@ -78,7 +81,8 @@ async def upload(
 
         # Reset de la progression
         progress_state["current"] = 0
-        progress_state["total"] = 1  # sera mis à jour dans run_analysis
+        progress_state["total"] = 1
+        progress_state["zip_path"] = ""
 
         # Lancer l'analyse en thread
         t = threading.Thread(
@@ -124,4 +128,19 @@ def progress_stream():
             "Connection": "keep-alive",
             "X-Accel-Buffering": "no"
         }
+    )
+
+
+# ---------------------------------------------------------
+# DOWNLOAD DU ZIP
+# ---------------------------------------------------------
+@app.get("/download")
+def download(zip_path: str):
+    if not os.path.exists(zip_path):
+        return {"status": "error", "message": "ZIP not found"}
+
+    return FileResponse(
+        zip_path,
+        filename=os.path.basename(zip_path),
+        media_type="application/zip"
     )

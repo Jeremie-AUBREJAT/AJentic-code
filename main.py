@@ -2,6 +2,7 @@ import os
 import re
 import json
 import logging
+import zipfile
 from pathlib import Path
 from datetime import datetime
 
@@ -12,7 +13,7 @@ from core.llm_client import ask_llm
 from core.doc_generator import generate_html_doc
 
 WORKSPACE = os.getenv("ANALYZER_WORKSPACE", "workspace")
-OUTPUT_DIR = os.getenv("ANALYZER_OUTPUT_DIR", "output")
+BASE_OUTPUT_DIR = os.getenv("ANALYZER_OUTPUT_DIR", "output")
 MAX_FILE_SEND_BYTES = int(os.getenv("ANALYZER_MAX_SEND_BYTES", "80000"))
 SAVE_FULL = os.getenv("ANALYZER_SAVE_FULL", "0") in ("1", "true", "yes")
 
@@ -208,10 +209,24 @@ def minimize_for_llm(final):
 
 
 # ---------------------------------------------------------
+# ZIP CREATOR
+# ---------------------------------------------------------
+def create_zip(output_dir):
+    zip_path = output_dir + ".zip"
+    with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zipf:
+        for root, dirs, files in os.walk(output_dir):
+            for file in files:
+                full_path = os.path.join(root, file)
+                rel_path = os.path.relpath(full_path, output_dir)
+                zipf.write(full_path, rel_path)
+    return zip_path
+
+
+# ---------------------------------------------------------
 # SAUVEGARDE
 # ---------------------------------------------------------
-def save_output(data):
-    out = Path(OUTPUT_DIR)
+def save_output(data, output_dir):
+    out = Path(output_dir)
     out.mkdir(parents=True, exist_ok=True)
 
     minimized = minimize_for_llm(data)
@@ -235,6 +250,10 @@ def run_analysis(input_path, provider, model=None, api_key=None, endpoint=None, 
     input_type = detect_input(input_path)
     project_dir = extract_input(input_path, WORKSPACE)
     files = scan_codebase(project_dir)
+
+    # Nom du plugin
+    plugin_name = os.path.splitext(os.path.basename(input_path))[0]
+    output_dir = os.path.join(BASE_OUTPUT_DIR, plugin_name + "-analysed")
 
     # Initialisation de la progression
     if progress_state is not None:
@@ -269,10 +288,14 @@ def run_analysis(input_path, provider, model=None, api_key=None, endpoint=None, 
         "results": results,
     }
 
-    save_output(final)
-    generate_html_doc(final)
+    # Sauvegarde JSON + HTML
+    save_output(final, output_dir)
+    generate_html_doc(final, output_dir)
 
-    return final
+    # Création du ZIP
+    zip_path = create_zip(output_dir)
+
+    return zip_path
 
 
 # ---------------------------------------------------------
