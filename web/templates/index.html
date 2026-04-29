@@ -2,10 +2,10 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Agent Dev</title>
+<title>AJ-entics-Tools</title>
 
 <style>
-
+/* --- TON CSS INCHANGÉ --- */
 body{
     font-family: "Inter", Arial, sans-serif;
     background: linear-gradient(135deg, #0d0d0d, #1a1a1a);
@@ -14,27 +14,6 @@ body{
     padding-top:0px;
     margin:0;
 }
-
-.svg{
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    margin-top:10px;
-}
-
-.svg svg{
-    width:100px;
-    height:100px;
-}
-
-h1{
-    font-size:36px;
-    font-weight:600;
-    letter-spacing:1px;
-    margin-bottom:40px;
-    color:#eaeaea;
-}
-
 .upload-box{
     width:420px;
     margin:auto;
@@ -45,7 +24,6 @@ h1{
     border:1px solid rgba(255,255,255,0.12);
     box-shadow:0 10px 40px rgba(0,0,0,0.4);
 }
-
 input,select{
     width:100%;
     padding:12px;
@@ -55,11 +33,15 @@ input,select{
     background:rgba(255,255,255,0.08);
     color:white;
 }
-
-option{
-    color: black;
+option{ color:black; }
+label{
+    display:block;
+    margin-top:18px;
+    margin-bottom:6px;
+    text-align:left;
+    font-size:14px;
+    color:#dcdcdc;
 }
-
 button{
     margin-top:25px;
     padding:12px 25px;
@@ -70,7 +52,6 @@ button{
     background:linear-gradient(135deg,#0078ff,#005fcc);
     color:white;
 }
-
 #result{
     margin-top:40px;
     width:80%;
@@ -85,39 +66,23 @@ button{
     white-space:pre-wrap;
     font-size:15px;
 }
-
-.hidden{
-    display:none;
-}
-label{
-    display:block;
-    margin-top:18px;
-    margin-bottom:6px;
-    text-align:left;
-    font-size:14px;
-    color:#dcdcdc;
-}
-
-/* Progress bar */
+.hidden{ display:none; }
 #progress-container{
     display:none;
     margin-top:25px;
     text-align:left;
 }
-
 #progress-text{
     margin-bottom:8px;
     font-size:14px;
     font-weight:bold;
 }
-
 #progress-bar-bg{
     width:100%;
     height:20px;
     background:#333;
     border-radius:10px;
 }
-
 #progress-bar{
     width:0%;
     height:100%;
@@ -125,7 +90,6 @@ label{
     border-radius:10px;
     transition:width 0.3s;
 }
-
 </style>
 </head>
 
@@ -139,15 +103,15 @@ label{
 
 <label>Provider</label>
 <select name="provider" id="provider">
-<option value="openai">OpenAI</option>
+<!-- <option value="openai">OpenAI</option>
 <option value="anthropic">Claude</option>
 <option value="google">Google</option>
-<option value="mistral">Mistral</option>
+<option value="mistral">Mistral</option> -->
 <option value="local">Local (LM Studio / Oobabooga / Kobold)</option>
 </select>
-
+<!-- 
 <label>Model</label>
-<input type="text" name="model" placeholder="ex: gpt-4o, gemma-4-26b-a4b-it, claude-3-sonnet">
+<input type="text" name="model" placeholder="ex: gpt-4o, gemma-4-26b-a4b-it, claude-3-sonnet"> -->
 
 <div id="api_key_box">
 <label>API Key</label>
@@ -176,9 +140,10 @@ label{
 
 </div>
 
-<pre id="result"></pre>
+<!-- <pre id="result"></pre> -->
 
 <script>
+console.log("JS LOADED"); // DEBUG
 
 const provider = document.getElementById("provider")
 const apiBox = document.getElementById("api_key_box")
@@ -193,79 +158,91 @@ function updateUI(){
         endpointBox.classList.add("hidden")
     }
 }
-
 provider.addEventListener("change",updateUI)
 updateUI()
 
-// PROGRESS BAR ELEMENTS
 const progressContainer = document.getElementById("progress-container")
 const progressBar = document.getElementById("progress-bar")
 const progressText = document.getElementById("progress-text")
+const resultBox = document.getElementById("result")
 
 document.getElementById("uploadForm").onsubmit = async function(e){
-
     e.preventDefault()
 
     let formData = new FormData(this)
 
-    // Reset progress bar
+    // Reset UI
     progressContainer.style.display = "block"
     progressBar.style.width = "0%"
     progressText.innerText = "Préparation..."
+    resultBox.textContent = ""
 
-    // Fake progress animation
-    let progress = 0
-    let interval = setInterval(() => {
-        if(progress < 90){
-            progress += 1
-            progressBar.style.width = progress + "%"
-            progressText.innerText = "Analyse en cours... " + progress + "%"
-        }
-    }, 300)
-
-    let response = await fetch("/upload",{
-        method:"POST",
-        body:formData
+    // 1) Lancer l'analyse (réponse immédiate)
+    const resp = await fetch("/upload", {
+        method: "POST",
+        body: formData
     })
+    const data = await resp.json()
 
-    let data = await response.json()
+    if (data.status !== "started") {
+        resultBox.textContent = "Erreur: " + JSON.stringify(data, null, 2)
+        return
+    }
 
-    clearInterval(interval)
-    progressBar.style.width = "100%"
-    progressText.innerText = "Analyse terminée !"
+    // 2) Ouvrir le SSE APRÈS le lancement
+    const evt = new EventSource("/progress")
 
-    document.getElementById("result").textContent =
-        JSON.stringify(data,null,2)
+    evt.onmessage = (e) => {
+        const p = JSON.parse(e.data)
+
+        const total = p.total || 1
+        const percent = Math.floor((p.current / total) * 100)
+
+        progressBar.style.width = percent + "%"
+        progressText.innerText = `Analyse : ${p.current} / ${p.total} fichiers (${percent}%)`
+
+        // 3) Quand c'est fini
+        if (p.current >= p.total && p.total > 0) {
+            evt.close()
+            progressText.innerText = "Analyse terminée. Chargement du résultat..."
+
+            fetch("/output/result.json")
+                .then(r => r.json())
+                .then(j => {
+                    resultBox.textContent = JSON.stringify(j, null, 2)
+                    progressText.innerText = "Analyse terminée."
+                })
+                .catch(err => {
+                    resultBox.textContent = "Erreur chargement résultat: " + err
+                })
+        }
+    }
+
+    evt.onerror = (e) => {
+        console.error("[SSE] Erreur /progress:", e)
+    }
 }
 
-
-// Charger les valeurs sauvegardées
+// LocalStorage
 window.addEventListener("load", () => {
     if(localStorage.provider) provider.value = localStorage.provider
     if(localStorage.model) document.querySelector("input[name='model']").value = localStorage.model
     if(localStorage.api_key) document.querySelector("input[name='api_key']").value = localStorage.api_key
     if(localStorage.endpoint) document.querySelector("input[name='endpoint']").value = localStorage.endpoint
-
     updateUI()
 })
-
-// Sauvegarder automatiquement à chaque changement
 provider.addEventListener("change", () => {
     localStorage.provider = provider.value
 })
-
 document.querySelector("input[name='model']").addEventListener("input", e => {
     localStorage.model = e.target.value
 })
-
 document.querySelector("input[name='api_key']").addEventListener("input", e => {
     localStorage.api_key = e.target.value
 })
-
 document.querySelector("input[name='endpoint']").addEventListener("input", e => {
     localStorage.endpoint = e.target.value
 })
-
 </script>
 
 </body>

@@ -73,9 +73,7 @@ def analyze_file(path: Path, provider=None, model=None, api_key=None, endpoint=N
 
     code = _mask(code)
 
-    # Appel LLM universel
     resp = ask_llm(code, provider, model, api_key, endpoint)
-
     return _normalize(resp)
 
 
@@ -109,10 +107,8 @@ def _postprocess_llm_aggregates(g):
 
     blacklist_ajax_prefix = ("wpcf7dtx_",)
 
-    # CLASSES
     g["cls"] = {c for c in g["cls"] if c not in blacklist_classes}
 
-    # FUNCTIONS
     cleaned_fn = set()
     for f in g["fn"]:
         if f in blacklist_fn_exact:
@@ -126,7 +122,6 @@ def _postprocess_llm_aggregates(g):
         cleaned_fn.add(f)
     g["fn"] = cleaned_fn
 
-    # HOOKS
     cleaned_hooks = set()
     for h in g["hk"]:
         if h in blacklist_hooks_exact:
@@ -138,7 +133,6 @@ def _postprocess_llm_aggregates(g):
         cleaned_hooks.add(h)
     g["hk"] = cleaned_hooks
 
-    # AJAX
     cleaned_ax = set()
     for a in g["ax"]:
         if any(a.startswith(p) for p in blacklist_ajax_prefix):
@@ -146,10 +140,8 @@ def _postprocess_llm_aggregates(g):
         cleaned_ax.add(a)
     g["ax"] = cleaned_ax
 
-    # FLOW
     g["flow"] = [a for a in g["flow"] if a in g["ax"]]
 
-    # SINKS
     g["sink"] = list(set(g["sink"]))
 
     return g
@@ -236,17 +228,28 @@ def save_output(data):
 
 
 # ---------------------------------------------------------
-# PIPELINE PRINCIPAL
+# PIPELINE PRINCIPAL (AVEC PROGRESS_STATE)
 # ---------------------------------------------------------
-def run_analysis(input_path, provider, model=None, api_key=None, endpoint=None):
+def run_analysis(input_path, provider, model=None, api_key=None, endpoint=None, progress_state=None):
 
     input_type = detect_input(input_path)
     project_dir = extract_input(input_path, WORKSPACE)
     files = scan_codebase(project_dir)
 
+    # Initialisation de la progression
+    if progress_state is not None:
+        progress_state["current"] = 0
+        progress_state["total"] = len(files)
+
     results = []
+
     for f in files:
         p = Path(f)
+
+        # Mise à jour de la progression
+        if progress_state is not None:
+            progress_state["current"] += 1
+
         results.append({
             "file": str(p),
             "analysis": analyze_file(
@@ -282,4 +285,4 @@ if __name__ == "__main__":
         print("Usage: python main.py <input_path>")
         exit(2)
 
-    run_analysis(sys.argv[1], provider="local")
+    run_analysis(sys.argv[1], provider="local", progress_state={"current": 0, "total": 1})
