@@ -24,7 +24,14 @@ body{
     backdrop-filter:blur(12px);
     border:1px solid rgba(255,255,255,0.12);
 }
-
+label{
+    display:block;
+    margin-top:18px;
+    margin-bottom:6px;
+    text-align:left;
+    font-size:14px;
+    color:#dcdcdc;
+}
 input,select{
     width:100%;
     padding:12px;
@@ -93,7 +100,7 @@ button{
 
 <body>
 
-<h1>AJ-entic – Analyse plugin WordPress</h1>
+<h1>AJ-entic – Analyze WordPress plugin</h1>
 
 <div class="upload-box">
 
@@ -101,15 +108,15 @@ button{
 
 <label>Provider</label>
 <select name="provider" id="provider">
-<option value="openai">OpenAI</option>
+<!-- <option value="openai">OpenAI</option>
 <option value="anthropic">Claude</option>
 <option value="google">Google</option>
-<option value="mistral">Mistral</option>
+<option value="mistral">Mistral</option> -->
 <option value="local">Local (LM Studio / Oobabooga / Kobold)</option>
 </select>
 
-<label>Model</label>
-<input type="text" name="model" placeholder="ex: gpt-4o, claude-3-sonnet">
+<label class="hidden">Model</label>
+<input class="hidden" type="text" name="model" placeholder="ex: gpt-4o, claude-3-sonnet">
 
 <div id="api_key_box">
 <label>API Key</label>
@@ -121,25 +128,25 @@ button{
 <input type="text" name="endpoint" placeholder="http://127.0.0.1:5000/v1/chat/completions">
 </div>
 
-<label>Plugin WordPress (zip ou dossier)</label>
+<label>WordPress Plugin (zip or folder)</label>
 <input type="file" name="file" required>
 
-<button type="submit">Analyser</button>
+<button type="submit">Analyzer</button>
 
 </form>
 
 <div id="progress-container">
-    <div id="progress-text">Analyse en cours...</div>
+    <div id="progress-text">Progress...</div>
     <div id="progress-bar-bg">
         <div id="progress-bar"></div>
     </div>
 </div>
 
-<button id="downloadBtn" class="hidden">Télécharger l’analyse</button>
+<button id="downloadBtn" class="hidden">Download results</button>
 
 </div>
 
-<pre id="result"></pre>
+<pre id="result" class="hidden"></pre>
 
 <script>
 console.log("UI loaded")
