@@ -42,18 +42,16 @@ def index():
 # ---------------------------------------------------------
 # THREAD D'ANALYSE
 # ---------------------------------------------------------
-def background_analysis(filepath, provider, model, api_key, endpoint):
-    # run_analysis retourne maintenant le chemin du ZIP
+def background_analysis(input_path, provider, model, api_key, endpoint, agent):
     zip_path = run_analysis(
-        filepath,
+        input_path,
         provider=provider,
         model=model,
         api_key=api_key,
         endpoint=endpoint,
+        agent=agent,
         progress_state=progress_state
     )
-
-    # On stocke le chemin du ZIP dans l'état global
     progress_state["zip_path"] = zip_path
 
 
@@ -62,47 +60,50 @@ def background_analysis(filepath, provider, model, api_key, endpoint):
 # ---------------------------------------------------------
 @app.post("/upload")
 async def upload(
-    file: UploadFile = File(...),
+    file: UploadFile | None = File(None),
+    url: str | None = Form(None),
     provider: str = Form(...),
     model: str = Form(None),
     api_key: str = Form(None),
-    endpoint: str = Form(None)
+    endpoint: str = Form(None),
+    agent: str = Form("default")
 ):
 
-    if not file.filename:
-        return {"status": "error", "message": "No file uploaded"}
+    # MODE WEB_AUDIT → pas de fichier, seulement une URL
+    if agent == "web_audit":
+        if not url:
+            return {"status": "error", "message": "URL manquante pour web_audit"}
+        input_path = url
 
-    filepath = os.path.join(UPLOAD_DIR, file.filename)
+    else:
+        # MODE NORMAL → fichier obligatoire
+        if not file or not file.filename:
+            return {"status": "error", "message": "Aucun fichier uploadé"}
 
-    try:
-        # Sauvegarde du fichier uploadé
-        with open(filepath, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
+        filepath = os.path.join(UPLOAD_DIR, file.filename)
 
-        # Reset de la progression
-        progress_state["current"] = 0
-        progress_state["total"] = 1
-        progress_state["zip_path"] = ""
+        try:
+            with open(filepath, "wb") as buffer:
+                shutil.copyfileobj(file.file, buffer)
+        except Exception as e:
+            return {"status": "error", "message": f"Erreur sauvegarde fichier: {e}"}
 
-        # Lancer l'analyse en thread
-        t = threading.Thread(
-            target=background_analysis,
-            args=(filepath, provider, model, api_key, endpoint),
-            daemon=True
-        )
-        t.start()
+        input_path = filepath
 
-        # Réponse immédiate
-        return {
-            "status": "started",
-            "file": file.filename
-        }
+    # Reset progression
+    progress_state["current"] = 0
+    progress_state["total"] = 1
+    progress_state["zip_path"] = ""
 
-    except Exception as e:
-        return {
-            "status": "error",
-            "message": str(e)
-        }
+    # Lancer l'analyse en thread
+    t = threading.Thread(
+        target=background_analysis,
+        args=(input_path, provider, model, api_key, endpoint, agent),
+        daemon=True
+    )
+    t.start()
+
+    return {"status": "started"}
 
 
 # ---------------------------------------------------------

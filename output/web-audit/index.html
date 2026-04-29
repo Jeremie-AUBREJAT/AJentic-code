@@ -1,0 +1,706 @@
+<html><head><meta charset='utf-8'>
+<title>Plugin Documentation</title>
+
+    <style>
+    body { font-family: Arial; background:#111; color:#eee; padding:20px; }
+    h1 { color:#4fc3f7; }
+    h2 { color:#81d4fa; margin-top:30px; }
+    h3 { color:#90caf9; }
+    .box { background:#1e1e1e; padding:15px; margin:10px 0; border-radius:8px; }
+    .file { border-left:3px solid #4fc3f7; padding-left:10px; margin-bottom:20px; }
+    pre { background:#000; padding:10px; overflow:auto; }
+    </style>
+    
+</head><body>
+<h1>WordPress Plugin Documentation</h1>
+<p>Generated: 2026-04-29 16:51:15.125058</p>
+<h2>Architecture Overview</h2>
+<div class='box'>
+<p><b>Functions:</b> 135</p>
+<p><b>Hooks:</b> 54</p>
+<p><b>AJAX endpoints:</b> 5</p>
+</div>
+<h2>Execution Model</h2>
+
+    <div class='box'>
+    <pre>
+1. Plugin init (WordPress hooks)
+2. DOM scan (dtx.init)
+3. Detect dynamic fields
+4. Resolve values (local or AJAX)
+5. Server-side CF7 processing
+6. Return JSON
+7. Update DOM inputs
+    </pre>
+    </div>
+    
+<h2>Files Analysis</h2>
+<div class='box file'>
+<h3>workspace\web_audit\lepetitfut.aj-web.fr\page_0.html</h3>
+<p><b>Summary:</b> The analyzed file snippet is the <head> section of an HTML document. It primarily contains meta tags, title definitions, and numerous <link> tags referencing external CSS resources from the WordPress core and a plugin named 'wp-carousel-free'. The loaded assets include Swiper bundle styles, Font Awesome styles, the main carousel styles, and FancyBox popup styles, indicating the presence of a carousel/slider feature.</p>
+<h4>Functions</h4><pre>
+add_action
+add_filter
+remove_action
+remove_filter
+apply_filters
+do_action
+add_shortcode
+</pre>
+<h4>Hooks</h4><pre>
+feed
+comments/feed
+wp-carousel-free-css
+</pre>
+</div>
+<div class='box file'>
+<h3>workspace\web_audit\lepetitfut.aj-web.fr\script_1.js</h3>
+<p><b>Summary:</b> </p>
+</div>
+<div class='box file'>
+<h3>workspace\web_audit\lepetitfut.aj-web.fr\script_2.js</h3>
+<p><b>Summary:</b> The provided file is a jQuery library definition, heavily focused on backward compatibility, migration handling, and advanced jQuery utility functions (e.g., JSON parsing, DOM manipulation, event handling). It demonstrates thorough legacy support (migrations) for features that are now deprecated in modern jQuery versions. As a standalone library, it is robust, but its integration within a WordPress plugin requires scrutiny of where these methods are applied, especially concerning the parsing of user input via jQuery.data() and the handling of raw HTML input via the htmlPrefilter.</p>
+<h4>Functions</h4><pre>
+parseJSON
+isFunction
+isWindow
+trim
+nodeName
+isNumeric
+type
+isFunction
+isWindow
+</pre>
+<h4>Hooks</h4><pre>
+ajax
+param
+</pre>
+</div>
+<div class='box file'>
+<h3>workspace\web_audit\lepetitfut.aj-web.fr\script_3.js</h3>
+<p><b>Summary:</b> This script implements interactive logic for a WordPress navigation menu, leveraging the @wordpress/interactivity library. It manages the state of a menu (opening/closing), handles event listeners for hover, click, and keyboard interactions (like Escape and Tab navigation), and controls the visibility of a modal overlay by manipulating DOM classes and focusing elements within the navigation structure.</p>
+<h4>Functions</h4><pre>
+t.d
+o
+n
+getContext
+getElement
+store
+withSyncEvent
+openMenuOnHover
+closeMenuOnHover
+openMenuOnClick
+closeMenuOnClick
+openMenuOnFocus
+toggleMenuOnClick
+handleMenuKeydown
+handleMenuFocusout
+openMenu
+closeMenu
+initMenu
+focusFirstElement
+</pre>
+<h4>Hooks</h4><pre>
+core/navigation
+</pre>
+</div>
+<div class='box file'>
+<h3>workspace\web_audit\lepetitfut.aj-web.fr\script_4.js</h3>
+<p><b>Summary:</b> This script defines the core functionality for the FancyBox library. It includes a main function 'i' to handle modal/lightbox opening based on data attributes, manages configuration options, and defines templates for different content types (image, video, custom). It also sets up console logging and configuration for AJAX settings.</p>
+<h4>Functions</h4><pre>
+i
+console.info
+</pre>
+<h4>Hooks</h4><pre>
+add_action
+add_filter
+remove_action
+remove_filter
+apply_filters
+do_action
+add_shortcode
+</pre>
+</div>
+<div class='box file'>
+<h3>workspace\web_audit\lepetitfut.aj-web.fr\script_5.js</h3>
+<p><b>Summary:</b> The provided code snippet is a jQuery initialization block that sets up a dynamic carousel functionality using the FancyBox plugin. It iterates over elements with the class '.wpcp-carousel-section', determines the carousel ID and type, dynamically builds a highly specific CSS selector for the FancyBox integration, and initializes the FancyBox functionality. 
+
+**Security Analysis Findings:**
+
+1. **XSS Potential (Medium):** The primary risk lies in the dynamic construction of the FancyBox button titles (e.g., `{{PREV}}`, `{{NEXT}}`). If the data passed into these template variables originates from unvalidated user input or a compromised source, it could lead to XSS when rendered in the `title` attribute of the buttons.
+2. **DOM Manipulation:** The code heavily manipulates the DOM by selecting elements based on IDs and data attributes. While standard for this setup, if the data attributes (`data-fancybox`, `data-carousel_type`) are insufficiently sanitized, it opens the door to DOM-based XSS or unexpected carousel behavior.
+3. **Endpoints/AJAX:** No explicit AJAX endpoints were present in this snippet, indicating that the carousel functionality here is primarily client-side, relying on initial page load data.</p>
+<h4>Functions</h4><pre>
+ready
+</pre>
+<h4>Hooks</h4><pre>
+add_action
+add_filter
+remove_action
+remove_filter
+apply_filters
+do_action
+add_shortcode
+</pre>
+</div>
+<div class='box file'>
+<h3>workspace\web_audit\lepetitfut.aj-web.fr\script_6.js</h3>
+<p><b>Summary:</b> </p>
+</div>
+<div class='box file'>
+<h3>workspace\web_audit\lepetitfut.aj-web.fr\script_7.js</h3>
+<p><b>Summary:</b> </p>
+</div>
+<div class='box file'>
+<h3>workspace\web_audit\lepetitfut.aj-web.fr\script_8.js</h3>
+<p><b>Summary:</b> This JavaScript code initializes a Swiper carousel component. It iterates over all elements with the class '.wpcp-carousel-section.wpcp-standard', initializes a Swiper instance for each one with detailed configuration options (autoplay, speed, slides per view, responsiveness, pagination, and navigation), and adds event listeners to pause/start the autoplay based on mouse hover events.</p>
+<h4>Functions</h4><pre>
+anonymous function (IIFE)
+jQuery.find
+jQuery.on
+function (mouseenter)
+function (mouseleave)
+</pre>
+<h4>Hooks</h4><pre>
+N/A (Pure client-side JavaScript, no WordPress hooks detected)
+</pre>
+<h4>AJAX</h4><pre>
+N/A (No WordPress AJAX endpoints detected)
+</pre>
+</div>
+<div class='box file'>
+<h3>workspace\web_audit\lepetitfut.aj-web.fr\page_9.html</h3>
+<p><b>Summary:</b> The provided file snippet is primarily an HTML structure defining the `<head>` section of a WordPress page or template, including title tags, meta tags, and numerous external CSS file links (from wp-carousel-free and wp-includes). As this is output and not core plugin logic, the PHP analysis yielded very few artifacts. The security analysis, based strictly on this snippet, shows no direct server-side injection vulnerabilities (XSS, SQLi) but highlights reliance on external/third-party assets (jQuery, Swiper, FancyBox). A complete security audit requires the corresponding PHP plugin file.</p>
+<h4>Functions</h4><pre>
+public function __construct()
+</pre>
+<h4>Hooks</h4><pre>
+add_action
+add_filter
+</pre>
+</div>
+<div class='box file'>
+<h3>workspace\web_audit\lepetitfut.aj-web.fr\script_10.js</h3>
+<p><b>Summary:</b> This file is a comprehensive client-side JavaScript library, primarily a highly optimized jQuery-like implementation focused heavily on DOM manipulation, advanced CSS selector parsing, and efficient element selection. It provides methods for manipulating the DOM, handling pseudo-selectors, managing element states (like :checked, :disabled), and ensuring unique sorting of elements. It includes sophisticated logic for tag selection, attribute handling, and deep recursive traversal of the document structure. The implementation employs an extensive pseudo-selector engine to parse and match complex CSS selector strings efficiently.</p>
+<h4>Functions</h4><pre>
+m
+ce.extend
+ce.each
+ce.uniqueSort
+ce.fn.uniqueSort
+J
+K
+Z
+ee
+te
+</pre>
+<h4>Hooks</h4><pre>
+None
+</pre>
+<h4>AJAX</h4><pre>
+None
+</pre>
+</div>
+<div class='box file'>
+<h3>workspace\web_audit\lepetitfut.aj-web.fr\script_11.js</h3>
+<p><b>Summary:</b> The provided file is a heavily minified/transpiled core of jQuery, featuring extensive deprecation warnings and migration logic. It handles core functionality including DOM manipulation (`.offset()`, `.css()`, `.swap()`), event handling (`.on()`, `.bind()`, `.delegate()`), JSON parsing, and AJAX integration. The analysis performed an audit of the extracted functions and hooks. 
+
+### 🔥 Vulnérabilités potentielles
+
+1. **XSS Potential (Mitigated but present risk):** The `htmlPrefilter` function (`i(s,"htmlPrefilter",...)`) attempts to sanitize HTML by replacing unclosed tags (using the regex `F`). However, the presence of jQuery's core methods (especially `.css()`, `.html()`, and the `T` function which sets `innerHTML`) means that if data originating from a WordPress context (e.g., user input in AJAX responses) is passed directly to jQuery methods without proper sanitization, XSS could occur. The migration warnings suggest that legacy DOM handling patterns might still exist or be susceptible.
+2. **Dangerous Pattern (JSON Parsing):** The file explicitly deals with `JSON.parse` (jQuery.parseJSON). If the AJAX handler (referenced via `s.ajax`) retrieves data and passes it to `$.parseJSON()` without validation, it could lead to unexpected behavior or injection if the original data structure is exploited.
+3. **Storage/Data:** The detailed implementation of `jQuery.data()` shows a pattern for storing data using camelCase, which is generally good practice, but the underlying data source (potentially user input) is the weak link.
+
+### 🔧 Ce que tu dois fournir
+
+**Risques trouvés:**
+*   **Risk:** Potential Cross-Site Scripting (XSS) via DOM manipulation.
+*   **Explication:** Although a basic HTML pre-filter is implemented, core jQuery functions (like setting content via `innerHTML` or applying styles) operate on potentially untrusted data. If the input isn't strictly controlled, malicious scripts can be injected.
+*   **Niveau de criticité:** Medium
+*   **Comment exploiter la faille:** An attacker could inject a payload like `<script>alert('XSS')</script>` into a field that is later rendered by `$('.selector').html(userInput);`.
+*   **Comment corriger:** Ensure all data retrieved from AJAX endpoints (referenced by `s.ajax`) is rigorously validated or utilize jQuery's safer methods (e.g., `.text()` instead of `.html()` for plain text).
+
+**Risques trouvés:**
+*   **Risk:** JSON Injection/Parsing Risk.
+*   **Explication:** The dependency on `jQuery.parseJSON` means that if an attacker can control the JSON payload returned by the server, they might introduce unexpected data types or structures during parsing.
+*   **Niveau de criticité:** Low to Medium (depending on the context of the endpoint)
+*   **Comment exploiter la faille:** Return a JSON payload where a field intended to be a number is instead an object or a string that the front-end interprets dangerously.
+*   **Comment corriger:** Implement strict schema validation on all AJAX responses before passing them to the client-side parsing functions.
+</p>
+<h4>Functions</h4><pre>
+function(t)
+function e(e)
+function u(e, t)
+function r(e, t, r, n, o)
+function a(e, t, r, n, o)
+function c(e, t, r, n, o)
+function i(e, t, r, n)
+function x(e)
+function T(e)
+</pre>
+<h4>Hooks</h4><pre>
+jQuery.fn.init
+jQuery.fn.find
+jQuery.fn.size
+jQuery.parseJSON
+jQuery.holdReady
+jQuery.unique
+jQuery.expr.filters
+jQuery.expr[':']
+jQuery.trim
+jQuery.nodeName
+jQuery.isArray
+jQuery.isNumeric
+jQuery.type
+jQuery.isFunction
+jQuery.isWindow
+jQuery.ajax
+jQuery.param
+jQuery.fn.removeAttr
+jQuery.fn.toggleClass
+jQuery.fn.swap
+jQuery.fn.css
+jQuery.data
+jQuery.Tween.prototype.run
+jQuery.fx.interval
+</pre>
+</div>
+<div class='box file'>
+<h3>workspace\web_audit\lepetitfut.aj-web.fr\script_12.js</h3>
+<p><b>Summary:</b> </p>
+</div>
+<div class='box file'>
+<h3>workspace\web_audit\lepetitfut.aj-web.fr\script_13.js</h3>
+<p><b>Summary:</b> The file contains the core JavaScript logic for initializing and managing the FancyBox modal library. It defines the primary function 'i' to handle fancybox instance creation, event handling (like blur triggers), opening modals, and rendering based on configuration. It also defines the core configuration object for FancyBox, including templates for iframes, videos, and dialog containers.</p>
+<h4>Functions</h4><pre>
+i
+console.info
+</pre>
+<h4>Hooks</h4><pre>
+add_shortcode
+</pre>
+</div>
+<div class='box file'>
+<h3>workspace\web_audit\lepetitfut.aj-web.fr\script_14.js</h3>
+<p><b>Summary:</b> The provided code snippet is a client-side JavaScript initialization function using jQuery to set up Fancybox for carousels. It dynamically constructs CSS selectors based on element IDs and data attributes found in the DOM (specifically `id` and `data-carousel_type`).
+
+**Security Analysis:**
+1. **Risk Level:** Low.
+2. **Vulnerability Details:** The primary risk lies in the dynamic selector generation: `var selector = "#" + carousel_id + '...'`. If the `carousel_id` or `carousel_type` attribute derived from the DOM were sourced from unsanitized user input (e.g., a URL parameter passed as a data attribute), it could lead to DOM-based XSS if the resulting selector string was later used unsafely (though here it is used for a CSS selector, which is generally safer than `innerHTML`).
+3. **Specific Points:**
+    * **XSS/Injection:** Minimal risk, as the selector is primarily a string path. The risk is mitigated by the fact that `carousel_id` is pulled from a valid DOM element ID.
+    * **DOM Manipulation:** The snippet uses safe DOM methods (`.attr()`, `.data()`, `.css()`) and relies on a trusted library (`fancybox`).
+    * **Endpoints/Data Leakage:** No external endpoints or sensitive data are exposed in this snippet.
+4. **Recommendations:** Ensure that any variable used to construct selectors (like `carousel_id` or `carousel_type`) is thoroughly validated on the server side or strictly sanitized on the client side before being assigned to these variables to prevent sophisticated injection attacks targeting the selector logic.</p>
+<h4>Functions</h4><pre>
+ready
+</pre>
+<h4>Hooks</h4><pre>
+add_action
+add_filter
+remove_action
+remove_filter
+apply_filters
+do_action
+add_shortcode
+</pre>
+</div>
+<div class='box file'>
+<h3>workspace\web_audit\lepetitfut.aj-web.fr\script_15.js</h3>
+<p><b>Summary:</b> The script implements a jQuery plugin that handles a carousel transition effect. It iterates over all elements matching the selector '.wpcp-carousel-section.wpcp-preloader', animates them to opacity 0 (to remove them), and then animates them to opacity 1 (to reveal them), achieving a smooth transition effect for carousel sections based on their identified IDs and parent structure.</p>
+<h4>Functions</h4><pre>
+$
+anonymous function
+</pre>
+<h4>Hooks</h4><pre>
+add_action
+add_filter
+remove_action
+remove_filter
+apply_filters
+do_action
+add_shortcode
+</pre>
+</div>
+<div class='box file'>
+<h3>workspace\web_audit\lepetitfut.aj-web.fr\script_16.js</h3>
+<p><b>Summary:</b> This file is a highly optimized, minified JavaScript implementation of a carousel component (likely based on Swiper.js). It provides core functionality for DOM manipulation (getting computed styles, offset calculations, element creation/filtering), event handling (on, off, emit, once), and complex slide management, including responsive handling, virtual slides, and transition logic for smooth scrolling between slides.</p>
+<h4>Functions</h4><pre>
+e
+t
+l
+o
+d
+c
+p
+u
+h
+m
+f
+g
+v
+w
+</pre>
+<h4>Hooks</h4><pre>
+add_action
+add_filter
+remove_action
+remove_filter
+apply_filters
+do_action
+add_shortcode
+</pre>
+</div>
+<div class='box file'>
+<h3>workspace\web_audit\lepetitfut.aj-web.fr\script_17.js</h3>
+<p><b>Summary:</b> </p>
+</div>
+<div class='box file'>
+<h3>workspace\web_audit\lepetitfut.aj-web.fr\page_18.html</h3>
+<p><b>Summary:</b> The analyzed content is the HTML head section of a WordPress page. It primarily loads various CSS resources, including bundled styles from the 'wp-carousel-free' plugin (for Swiper and Font Awesome) and core WordPress navigation styles.</p>
+</div>
+<div class='box file'>
+<h3>workspace\web_audit\lepetitfut.aj-web.fr\script_19.js</h3>
+<p><b>Summary:</b> The file provided is the core logic for a highly customized or polyfilled jQuery implementation, focused heavily on robust DOM manipulation, selection logic, and pseudo-selector processing. It defines the fundamental jQuery methods (`ce.fn`) and selector engine (`ce.expr`) for a custom DOM library. Key features include custom pseudo-selectors (like :nth-child, :even, :odd), advanced attribute matching, robust selector escaping (`ce.escapeSelector`), and complex logic for CSS selector matching (including support for modern CSS features like `:has()`). The implementation includes mechanisms to efficiently handle element traversal, unique sorting, and precise context checking to determine the correct DOM node.</p>
+<h4>Functions</h4><pre>
+m
+x
+c
+fe
+ce.fn.jquery
+ce.fn.constructor
+ce.fn.length
+ce.fn.toArray
+ce.fn.get
+ce.fn.pushStack
+ce.fn.each
+ce.fn.map
+ce.fn.slice
+ce.fn.first
+ce.fn.last
+ce.fn.even
+ce.fn.odd
+ce.fn.eq
+ce.fn.extend
+ce.expr.cacheLength
+ce.expr.createPseudo
+ce.expr.match
+ce.expr.attrHandle
+ce.expr.find
+ce.expr.relative
+ce.expr.preFilter
+ce.expr.PSEUDO
+ce.fn.uniqueSort
+Q
+J
+K
+Z
+ee
+te
+ne
+</pre>
+<h4>Hooks</h4><pre>
+
+</pre>
+<h4>AJAX</h4><pre>
+
+</pre>
+</div>
+<div class='box file'>
+<h3>workspace\web_audit\lepetitfut.aj-web.fr\script_20.js</h3>
+<p><b>Summary:</b> The analyzed file is a comprehensive, heavily deprecated jQuery plugin focusing on DOM manipulation, event handling, and AJAX utilities. It implements numerous deprecated jQuery methods and includes utilities for JSON parsing, data management (camelCasing), CSS property handling, and deferred promises. 
+
+**Security Analysis:**
+1. **XSS Potential (Medium Risk):** The `htmlPrefilter` function attempts to mitigate XSS by using a regex (`F`) to sanitize input before setting the `innerHTML` of a DOM element (inside function `T`). If the input passed to this plugin (or an argument thereof) is not correctly sanitized, or if the sanitizer logic is flawed, a classic Stored/Reflected XSS vulnerability exists via `T(e)` where `e` is assigned to `t.body.innerHTML`.
+2. **Dangerous DOM Manipulation (Medium Risk):** The plugin relies heavily on setting and querying CSS properties (`jQuery.fn.css`, `jQuery.fn.swap`). While generally safer than raw `innerHTML`, complex interactions could expose DOM-based XSS if the input used to determine CSS values (`jQuery.fn.css`) is derived from user input without proper type checking.
+3. **Data Handling (Low Risk):** The `data-camelCase` utility correctly ensures data properties are camelCased, preventing common object property access errors.
+4. **AJAX Endpoint Exposure (Low Risk):** The plugin utilizes the jQuery AJAX feature (`s.ajax`), indicating that the underlying application exposes standard AJAX endpoints, though the specific `wp_ajax_*` endpoints are defined elsewhere in the WordPress context.</p>
+<h4>Functions</h4><pre>
+function(t)
+function(s,n)
+function e(e)
+function u(e,t)
+function r(e,t,r,n,o)
+function a(e,t,r,n,o)
+function c(e,t,r,n,o)
+function i(e,t,r,n)
+function x(e)
+function T(e)
+</pre>
+<h4>Hooks</h4><pre>
+ajax
+</pre>
+</div>
+<div class='box file'>
+<h3>workspace\web_audit\lepetitfut.aj-web.fr\script_21.js</h3>
+<p><b>Summary:</b> This JavaScript file implements a custom interactivity layer for WordPress, leveraging the `@wordpress/interactivity` package. It manages the state and behavior of a navigation menu or modal system (likely a sidebar or overlay). It defines state management (using a store/context pattern), handles user interactions (hover, click, keyboard events like Escape and Tab), and manages focus between interactive elements to control the visibility and navigation flow of the menu.</p>
+<h4>Functions</h4><pre>
+t
+n
+openMenuOnHover
+closeMenuOnHover
+openMenuOnClick
+closeMenuOnClick
+openMenuOnFocus
+toggleMenuOnClick
+handleMenuKeydown
+handleMenuFocusout
+openMenu
+closeMenu
+initMenu
+focusFirstElement
+</pre>
+<h4>Hooks</h4><pre>
+core/navigation
+</pre>
+</div>
+<div class='box file'>
+<h3>workspace\web_audit\lepetitfut.aj-web.fr\script_22.js</h3>
+<p><b>Summary:</b> The analyzed file is a JavaScript implementation for a FancyBox lightbox/modal library. It defines a core function 'i' responsible for opening and managing fancybox instances, handling event delegation (blur triggers), configuration options, and rendering templates for images, videos, and general modal structures. It includes configuration for AJAX settings and detailed template definitions for buttons, videos, and the main container.</p>
+<h4>Functions</h4><pre>
+i
+</pre>
+<h4>Hooks</h4><pre>
+fancybox
+</pre>
+</div>
+<div class='box file'>
+<h3>workspace\web_audit\lepetitfut.aj-web.fr\script_23.js</h3>
+<p><b>Summary:</b> The file contains client-side JavaScript logic, specifically using jQuery, to initialize a fancybox carousel feature for elements with the class '.wpcp-carousel-section'. It dynamically determines the selector for the fancybox based on the carousel's ID and type. It also configures custom buttons for navigation within the fancybox.</p>
+<h4>Functions</h4><pre>
+jQuery(document).ready
+</pre>
+<h4>Hooks</h4><pre>
+add_shortcode_name
+</pre>
+</div>
+<div class='box file'>
+<h3>workspace\web_audit\lepetitfut.aj-web.fr\script_24.js</h3>
+<p><b>Summary:</b> The analyzed code snippet is a pure JavaScript implementation using jQuery to handle a preloader or carousel animation sequence. It iterates over elements with the classes '.wpcp-carousel-section.wpcp-preloader', reads the ID of the current element, navigates up the DOM tree to find a corresponding preloader ID, and sequentially animates the preloader to opacity 0, removes it, and then animates the main carousel section to opacity 1. 
+
+### 🔥 Vulnérabilités potentielles
+
+*   **XSS (Potentielle si le contexte est mal défini) :** Bien que l'exécution ici soit interne, si les IDs ou les classes extraits (comme `carousel_id`) proviennent d'une source non validée (ex: URL), l'utilisation directe de ces IDs dans la construction du sélecteur jQuery (`jQuery("##"+carousel_id)`) pourrait théoriquement exposer des risques de DOM-based XSS si un attaquant parvient à injecter un structure plus complexe dans l'ID qui est ensuite interprété.
+*   **Mauvaises pratiques DOM/Performance :** L'utilisation d'une boucle `.each()` suivie d'animations séquentielle (dégradée en `remove()`) est typique des carrousels. Le risque est moins une vulnérabilité directe qu'une mauvaise pratique de performance si de nombreux éléments sont présents, entraînant potentiellement un blocage du thread principal lors des animations lourdes.
+
+### 🔧 Ce que tu dois fournir (Audit Résumé)
+
+*   **Risques trouvés :** Faible risque de vulnérabilité critique ici, principalement des risques de performance et de contexte.
+*   **Explication :** Le code est relativement sûr car il utilise des sélecteurs basés sur des classes statiques. La sécurité dépend entièrement de la source des IDs (`$()` ou `.attr("id")`).
+*   **Niveau de criticité :** Basse.
+*   **Comment exploiter la faille :** Nécessiterait une injection d'un ID malformé ou un attribut ID contenant des balises `jQuery` ou `eval()` si le système de templating injecte des données utilisateur.
+*   **Comment corriger :** S'assurer que tous les IDs et classes dérivés de l'entrée utilisateur sont rigoureusement validés (whitelisting) avant d'être utilisés dans les sélecteurs jQuery ou les attributs DOM.
+</p>
+<h4>Functions</h4><pre>
+!function($){"use strict";jQuery("body").find(".wpcp-carousel-section.wpcp-preloader").each((function(){var carousel_id=$(this).attr("id"),parents_class,parents_siblings_id=jQuery("#"+carousel_id").parents(".wpcp-carousel-wrapper").find(".wpcp-carousel-preloader").attr("id");jQuery("#"+parents_siblings_id").animate({opacity:0},600).remove(),jQuery("#"+carousel_id").animate({opacity:1},600)}))}(jQuery);
+</pre>
+<h4>Hooks</h4><pre>
+add_action
+add_filter
+remove_action
+remove_filter
+apply_filters
+do_action
+add_shortcode
+</pre>
+</div>
+<div class='box file'>
+<h3>workspace\web_audit\lepetitfut.aj-web.fr\script_25.js</h3>
+<p><b>Summary:</b> The analyzed file is a comprehensive vanilla JavaScript implementation, strongly resembling a Swiper.js carousel module. It provides core functionality for managing slides, handling transitions (including smooth scrolling logic), calculating slide dimensions, managing DOM elements, and implementing a custom event system for handling user interactions. The implementation includes detailed parsing logic for HTML strings, robust DOM manipulation methods (like adding/removing classes, setting styles, and updating content), and built-in support for responsive layouts and virtual slides.</p>
+<h4>Functions</h4><pre>
+e
+t
+l
+o
+d
+c.addClass
+c.removeClass
+c.hasClass
+c.toggleClass
+c.attr
+c.removeAttr
+c.transform
+c.transition
+c.on
+c.off
+c.trigger
+S.updateSize
+S.updateSlides
+</pre>
+<h4>Hooks</h4><pre>
+on
+</pre>
+<h4>AJAX</h4><pre>
+wp_ajax_*
+wp_ajax_nopriv_*
+</pre>
+</div>
+<div class='box file'>
+<h3>workspace\web_audit\lepetitfut.aj-web.fr\script_26.js</h3>
+<p><b>Summary:</b> The provided file is a JavaScript snippet, primarily utilizing jQuery to initialize and manage a Swiper carousel component. It iterates over elements with the class '.wpcp-carousel-section.wpcp-standard', reads configuration data from the DOM, initializes a Swiper instance for each carousel, sets up responsiveness (breakpoints), pagination, and navigation, and implements hover effects to control the autoplay mechanism. The code is client-side and performs DOM manipulation and component initialization rather than core WordPress backend logic.</p>
+<h4>Functions</h4><pre>
+anonymous function
+</pre>
+<h4>Hooks</h4><pre>
+swiper
+</pre>
+</div>
+<div class='box file'>
+<h3>workspace\web_audit\lepetitfut.aj-web.fr\page_27.html</h3>
+<p><b>Summary:</b> The provided content is the HTML head section of a webpage. It defines the title as 'Nos services - LE P'TIT FUT' and includes meta tags for SEO and Twitter card data. It links to various feeds and, critically, links to WordPress REST API endpoints for oEmbed services (wp-json/oembed/).</p>
+</div>
+<div class='box file'>
+<h3>workspace\web_audit\lepetitfut.aj-web.fr\script_28.js</h3>
+<p><b>Summary:</b> This file implements a custom interactive navigation/menu system for WordPress using the `@wordpress/interactivity` library. It manages the state of a navigation menu, handles mouse hover/click events to open/close menus, manages keyboard focus, and ensures accessibility features (ARIA attributes) are correctly updated. It provides robust control over the menu's visibility, focus management, and overlay states.</p>
+<h4>Functions</h4><pre>
+t
+n
+document.addEventListener
+openMenuOnHover
+closeMenuOnHover
+openMenuOnClick
+closeMenuOnClick
+openMenuOnFocus
+toggleMenuOnClick
+handleMenuKeydown
+handleMenuFocusout
+openMenu
+closeMenu
+initMenu
+focusFirstElement
+</pre>
+<h4>Hooks</h4><pre>
+core/navigation
+</pre>
+</div>
+<div class='box file'>
+<h3>workspace\web_audit\lepetitfut.aj-web.fr\page_29.html</h3>
+<p><b>Summary:</b> The analyzed file is an HTML structure snippet, specifically the <head> section of a webpage. It defines meta tags, the title, and several links pointing to feed endpoints and oEmbed endpoints for a specific diaporama (slideshow).</p>
+</div>
+<div class='box file'>
+<h3>workspace\web_audit\lepetitfut.aj-web.fr\script_30.js</h3>
+<p><b>Summary:</b> The file is highly minified JavaScript, likely a jQuery plugin core. It provides extensive utility functions for DOM manipulation, array processing, and selector handling. Key features include custom pseudo-selectors, robust attribute handling, and a mechanism (`globalEval` using a nonce) for sandboxed script execution. The primary security consideration is the rigorous selector escaping implemented to prevent XSS when setting IDs or classes from untrusted sources. The structure is designed for reliable DOM interaction within a WordPress environment.</p>
+<h4>Functions</h4><pre>
+ce.fn.jquery
+ce.fn.constructor
+ce.fn.length
+ce.fn.toArray
+ce.fn.get
+ce.fn.pushStack
+ce.fn.each
+ce.fn.map
+ce.fn.slice
+ce.fn.first
+ce.fn.last
+ce.fn.eq
+ce.fn.extend
+ce.fn.uniqueSort
+ce.fn.filter
+ce.fn.PSEUDO
+ce.fn.nth
+ce.fn.radio
+ce.fn.checkbox
+ce.fn.file
+ce.fn.password
+</pre>
+<h4>Hooks</h4><pre>
+add_action
+add_filter
+remove_action
+remove_filter
+apply_filters
+do_action
+add_shortcode
+</pre>
+</div>
+<div class='box file'>
+<h3>workspace\web_audit\lepetitfut.aj-web.fr\script_31.js</h3>
+<p><b>Summary:</b> </p>
+</div>
+<div class='box file'>
+<h3>workspace\web_audit\lepetitfut.aj-web.fr\script_32.js</h3>
+<p><b>Summary:</b> The analyzed file is a modern JavaScript module utilizing the WordPress Interactivity API to manage a navigation menu or modal system. It handles state management for menu visibility and focus based on user interactions (hover, click, keyboard navigation). It uses a centralized store to track the menu's state, including open status and focusable elements. The module defines several core functions for context retrieval, DOM element access, and action execution. The primary goal is to provide rich, interactive navigation functionality, with event listeners managing opening and closing actions.</p>
+<h4>Functions</h4><pre>
+t.d
+o
+n
+getContext
+getElement
+store
+Object.prototype.hasOwnProperty.call
+openMenuOnHover
+closeMenuOnHover
+openMenuOnClick
+closeMenuOnClick
+openMenuOnFocus
+toggleMenuOnClick
+handleMenuKeydown
+handleMenuFocusout
+openMenu
+closeMenu
+initMenu
+focusFirstElement
+</pre>
+<h4>Hooks</h4><pre>
+a[href]
+input:not([disabled]):not([type="hidden"]):not([aria-hidden])
+select:not([disabled]):not([aria-hidden])
+textarea:not([disabled]):not([aria-hidden])
+button:not([disabled]):not([aria-hidden])
+[contenteditable]
+[tabindex]:not([tabindex^="-"])
+document.addEventListener
+c.openMenu
+c.closeMenu
+</pre>
+</div>
+<div class='box file'>
+<h3>workspace\web_audit\lepetitfut.aj-web.fr\script_33.js</h3>
+<p><b>Summary:</b> The file contains a comprehensive, strict JavaScript implementation of the FancyBox lightbox library. It handles initialization, event delegation (blur, click), configuration options, and dynamic rendering of different content types (images, videos, iframes). It defines the structure and necessary class definitions for the modal dialog, including specific templates for loading spinners, errors, and buttons, all encapsulated within a modular structure.</p>
+<h4>Functions</h4><pre>
+function i(t,e){var o,i,a,s=[],r=0;t&&t.isDefaultPrevented()||(t.preventDefault(),e=e||{},t&&t.data&&(e=h(t.data.options,e)),o=e.$target||n(t.currentTarget).trigger("blur"),(a=n.fancybox.getInstance())&&a.$trigger&&a.$trigger.is(o)||(e.selector?s=n(e.selector):(i=o.attr("data-fancybox")||"",i?(s=t.data?t.data.items:[],s=s.length?s.filter('[data-fancybox="'+i+'"]'):n('[data-fancybox="'+i+'"]')):s=[o]),r=n(s).index(o),r<0&&(r=0),a=n.fancybox.open(s,e,r),a.$trigger=o)}
+</pre>
+<h4>Hooks</h4><pre>
+add_action
+add_filter
+remove_action
+remove_filter
+apply_filters
+do_action
+add_shortcode
+</pre>
+</div>
+<div class='box file'>
+<h3>workspace\web_audit\lepetitfut.aj-web.fr\script_34.js</h3>
+<p><b>Summary:</b> The analyzed file snippet is pure client-side JavaScript, primarily using jQuery and the FancyBox plugin to initialize dynamic carousels. 
+
+**Security Analysis Findings:**
+1. **Dynamic Selectors:** The code dynamically constructs CSS selectors based on element attributes (`carousel_id`) and data attributes (`carousel_type`). While this pattern is common, if `carousel_id` is sourced directly from user input without strict validation (though here it seems derived from the DOM), it presents a low-level risk for CSS injection.
+2. **Dangerous Patterns:** The snippet itself does not exhibit common dangerous patterns like `eval()` or direct `innerHTML` manipulation. The usage of `title` attributes in `btnTpl` is safer than using innerHTML.
+3. **Exposed Endpoints/Data:** Since this is a front-end script, the main risk lies in what data the carousel elements themselves hold. If the data displayed in the carousel is unsanitized (e.g., in the `title` placeholders like `{{PREV}}`), a reflected XSS could occur if the backend API feeding this data is weak.
+
+**Overall Criticality:** Low to Medium. The code is functional, but security heavily depends on the integrity of the data sources used to populate the carousel structure.</p>
+<h4>Functions</h4><pre>
+jQuery(document).ready(...)
+</pre>
+<h4>Hooks</h4><pre>
+add_action
+add_filter
+remove_action
+remove_filter
+apply_filters
+do_action
+add_shortcode
+</pre>
+</div>
+<div class='box file'>
+<h3>workspace\web_audit\lepetitfut.aj-web.fr\script_35.js</h3>
+<p><b>Summary:</b> The provided code snippet is a self-executing jQuery function that initializes a carousel preloader animation. It iterates over all elements with the class '.wpcp-carousel-section.wpcp-preloader', animates their opacity to 0 (to remove them) and then back to 1 (to show them), effectively creating a fade-out/fade-in effect for the carousel sections. The script heavily relies on DOM manipulation and jQuery methods.</p>
+<h4>Functions</h4><pre>
+function
+</pre>
+<h4>Hooks</h4><pre>
+wpcp-carousel-section.wpcp-preloader
+</pre>
+</div>
+</body></html>

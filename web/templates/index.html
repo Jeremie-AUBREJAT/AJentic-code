@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <title>AJ-entics Tools</title>
-
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/vanta@latest/dist/vanta.net.min.js"></script>
 <style>
 body{
     font-family: "Inter", Arial, sans-serif;
@@ -13,7 +14,9 @@ body{
     margin:0;
     padding:0;
 }
-
+option {
+    color: black;
+}
 .upload-box{
     width:420px;
     margin:auto;
@@ -100,7 +103,7 @@ button{
 
 <body>
 
-<h1>AJ-entic – Analyze WordPress plugin</h1>
+<h1>AJ-entic – Analyze WordPress plugin / Web Audit</h1>
 
 <div class="upload-box">
 
@@ -108,10 +111,6 @@ button{
 
 <label>Provider</label>
 <select name="provider" id="provider">
-<!-- <option value="openai">OpenAI</option>
-<option value="anthropic">Claude</option>
-<option value="google">Google</option>
-<option value="mistral">Mistral</option> -->
 <option value="local">Local (LM Studio / Oobabooga / Kobold)</option>
 </select>
 
@@ -128,10 +127,26 @@ button{
 <input type="text" name="endpoint" placeholder="http://127.0.0.1:5000/v1/chat/completions">
 </div>
 
-<label>WordPress Plugin (zip or folder)</label>
-<input type="file" name="file" required>
+<!-- ⭐ SELECTEUR D’AGENT ⭐ -->
+<label>Agent IA</label>
+<select name="agent" id="agent">
+    <option value="default">Analyze wordpress Plugin (ZIP / folder)</option>
+    <option value="web_audit">Audit Web (crawl URL)</option>
+</select>
 
-<button type="submit">Analyzer</button>
+<!-- ⭐ Champ URL pour web_audit ⭐ -->
+<div id="url_box" class="hidden">
+    <label>URL du site à analyser</label>
+    <input type="text" name="url" placeholder="https://exemple.com">
+</div>
+
+<!-- ⭐ Champ fichier pour les autres agents ⭐ -->
+<div id="file_box">
+    <label>WordPress Plugin (zip or folder)</label>
+    <input type="file" name="file" id="fileInput" required>
+</div>
+
+<button type="submit">Analyser</button>
 
 </form>
 
@@ -173,10 +188,43 @@ const progressText = document.getElementById("progress-text")
 const resultBox = document.getElementById("result")
 const downloadBtn = document.getElementById("downloadBtn")
 
+// ⭐ Gestion agent / URL / fichier ⭐
+const agentSelect = document.getElementById("agent")
+const urlBox = document.getElementById("url_box")
+const fileBox = document.getElementById("file_box")
+const fileInput = document.getElementById("fileInput")
+
+function updateAgentUI(){
+    if(agentSelect.value === "web_audit"){
+        urlBox.classList.remove("hidden")
+        fileBox.classList.add("hidden")
+        fileInput.removeAttribute("required")
+    } else {
+        urlBox.classList.add("hidden")
+        fileBox.classList.remove("hidden")
+        fileInput.setAttribute("required", "true")
+    }
+}
+agentSelect.addEventListener("change", updateAgentUI)
+updateAgentUI()
+
+// ⭐ Formulaire ⭐
 document.getElementById("uploadForm").onsubmit = async function(e){
     e.preventDefault()
 
-    let formData = new FormData(this)
+    let formData = new FormData()
+
+    formData.append("provider", this.provider.value)
+    formData.append("model", this.model.value)
+    formData.append("api_key", this.api_key.value)
+    formData.append("endpoint", this.endpoint.value)
+    formData.append("agent", this.agent.value)
+
+    if (this.agent.value === "web_audit") {
+        formData.append("url", this.url.value)
+    } else {
+        formData.append("file", this.file.files[0])
+    }
 
     progressContainer.style.display = "block"
     progressBar.style.width = "0%"
@@ -184,7 +232,6 @@ document.getElementById("uploadForm").onsubmit = async function(e){
     resultBox.textContent = ""
     downloadBtn.classList.add("hidden")
 
-    // 1) Lancer l'analyse
     const resp = await fetch("/upload", {
         method: "POST",
         body: formData
@@ -196,7 +243,6 @@ document.getElementById("uploadForm").onsubmit = async function(e){
         return
     }
 
-    // 2) Ouvrir le SSE
     const evt = new EventSource("/progress")
 
     evt.onmessage = (e) => {
@@ -208,23 +254,17 @@ document.getElementById("uploadForm").onsubmit = async function(e){
         progressBar.style.width = percent + "%"
         progressText.innerText = `Analyse : ${p.current} / ${p.total} fichiers (${percent}%)`
 
-        // Analyse terminée
         if (p.current >= p.total && p.total > 0 && p.zip_path){
             evt.close()
             progressText.innerText = "Analyse terminée."
 
-            // Afficher bouton téléchargement
             downloadBtn.classList.remove("hidden")
             downloadBtn.onclick = () => {
                 window.location.href = "/download?zip_path=" + encodeURIComponent(p.zip_path)
             }
 
-            // Charger le JSON
-            fetch("/output/result.json")
-                .then(r => r.json())
-                .then(j => {
-                    resultBox.textContent = JSON.stringify(j, null, 2)
-                })
+            resultBox.classList.remove("hidden")
+            resultBox.textContent = "Analyse terminée. Téléchargez le ZIP pour voir les résultats."
         }
     }
 
@@ -232,6 +272,21 @@ document.getElementById("uploadForm").onsubmit = async function(e){
         console.error("SSE error:", e)
     }
 }
+
+
+
+VANTA.NET({
+  el: "body",
+  mouseControls: true,
+  touchControls: true,
+  gyroControls: false,
+  minHeight: 200,
+  minWidth: 200,
+  scale: 1,
+  scaleMobile: 1,
+  color: 0x64a5e0,
+  backgroundColor: 0x0d0d0d
+})
 </script>
 
 </body>

@@ -3,8 +3,10 @@ import re
 import json
 import logging
 import zipfile
+import shutil
 from pathlib import Path
 from datetime import datetime
+from importlib import import_module
 
 from core.input_detector import detect_input
 from core.extractor import extract_input
@@ -60,9 +62,9 @@ def _normalize(resp):
 
 
 # ---------------------------------------------------------
-# ANALYSE D’UN FICHIER
+# ANALYSE D’UN FICHIER (MODE NORMAL)
 # ---------------------------------------------------------
-def analyze_file(path: Path, provider=None, model=None, api_key=None, endpoint=None):
+def analyze_file(path: Path, provider=None, model=None, api_key=None, endpoint=None, agent_instance=None):
 
     try:
         code = path.read_text(encoding="utf-8", errors="ignore")
@@ -74,7 +76,9 @@ def analyze_file(path: Path, provider=None, model=None, api_key=None, endpoint=N
 
     code = _mask(code)
 
-    resp = ask_llm(code, provider, model, api_key, endpoint)
+    prompt = agent_instance.build_prompt(code)
+
+    resp = ask_llm(prompt, provider, model, api_key, endpoint)
     return _normalize(resp)
 
 
@@ -243,19 +247,72 @@ def save_output(data, output_dir):
 
 
 # ---------------------------------------------------------
-# PIPELINE PRINCIPAL (AVEC PROGRESS_STATE)
+# PIPELINE PRINCIPAL (AVEC SUPPORT DES AGENTS)
 # ---------------------------------------------------------
-def run_analysis(input_path, provider, model=None, api_key=None, endpoint=None, progress_state=None):
+def run_analysis(input_path, provider, model=None, api_key=None, endpoint=None, agent="default", progress_state=None):
 
+    agent_module = import_module(f"agents.{agent}")
+    agent_instance = agent_module.Agent()
+
+    # ---------------------------------------------------------
+    # MODE WEB AUDIT (analyse fichier par fichier)
+    # ---------------------------------------------------------
+    if agent == "web_audit":
+
+        base_dir, files = agent_instance.crawl(input_path)
+
+        if progress_state is not None:
+            progress_state["current"] = 0
+            progress_state["total"] = len(files)
+
+        results = []
+
+        for f in files:
+            try:
+                code = f.read_text(encoding="utf-8", errors="ignore")
+            except:
+                code = ""
+
+            prompt = agent_instance.build_prompt(code)
+            resp = ask_llm(prompt, provider, model, api_key, endpoint)
+
+            results.append({
+                "file": str(f),
+                "analysis": _normalize(resp)
+            })
+
+            if progress_state is not None:
+                progress_state["current"] += 1
+
+        final = {
+            "type": "web_audit",
+            "files": len(results),
+            "files_list": [str(r["file"]) for r in results],
+            "llm": build_global_llm(results),
+            "results": results,
+        }
+
+        output_dir = os.path.join(BASE_OUTPUT_DIR, "web-audit")
+        save_output(final, output_dir)
+        generate_html_doc(final, output_dir)
+
+        zip_path = create_zip(output_dir)
+
+        # CLEANUP : supprimer les fichiers crawlés
+        shutil.rmtree(base_dir)
+
+        return zip_path
+
+    # ---------------------------------------------------------
+    # MODE NORMAL (ZIP / dossier plugin)
+    # ---------------------------------------------------------
     input_type = detect_input(input_path)
     project_dir = extract_input(input_path, WORKSPACE)
     files = scan_codebase(project_dir)
 
-    # Nom du plugin
     plugin_name = os.path.splitext(os.path.basename(input_path))[0]
     output_dir = os.path.join(BASE_OUTPUT_DIR, plugin_name + "-analysed")
 
-    # Initialisation de la progression
     if progress_state is not None:
         progress_state["current"] = 0
         progress_state["total"] = len(files)
@@ -265,7 +322,6 @@ def run_analysis(input_path, provider, model=None, api_key=None, endpoint=None, 
     for f in files:
         p = Path(f)
 
-        # Mise à jour de la progression
         if progress_state is not None:
             progress_state["current"] += 1
 
@@ -276,7 +332,8 @@ def run_analysis(input_path, provider, model=None, api_key=None, endpoint=None, 
                 provider=provider,
                 model=model,
                 api_key=api_key,
-                endpoint=endpoint
+                endpoint=endpoint,
+                agent_instance=agent_instance
             )
         })
 
@@ -288,14 +345,10 @@ def run_analysis(input_path, provider, model=None, api_key=None, endpoint=None, 
         "results": results,
     }
 
-    # Sauvegarde JSON + HTML
     save_output(final, output_dir)
     generate_html_doc(final, output_dir)
 
-    # Création du ZIP
-    zip_path = create_zip(output_dir)
-
-    return zip_path
+    return create_zip(output_dir)
 
 
 # ---------------------------------------------------------
@@ -308,4 +361,9 @@ if __name__ == "__main__":
         print("Usage: python main.py <input_path>")
         exit(2)
 
-    run_analysis(sys.argv[1], provider="local", progress_state={"current": 0, "total": 1})
+    run_analysis(
+        sys.argv[1],
+        provider="local",
+        agent="default",
+        progress_state={"current": 0, "total": 1}
+    )
